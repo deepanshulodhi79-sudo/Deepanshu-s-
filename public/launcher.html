@@ -7,65 +7,50 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
-        <div class="app-header">
+    <div class="simple-container">
+        <div class="simple-header">
             <h1>Fast Mail Launcher</h1>
-            <div class="header-actions">
-                <button id="logoutBtn" class="logout-btn">Logout</button>
-            </div>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
         </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
+        <div class="simple-grid">
             <!-- Left Column -->
-            <div class="form-column">
-                <div class="form-section">
-                    <h3>Sender Name</h3>
+            <div class="left-column">
+                <div class="input-group">
+                    <label>Sender Name</label>
                     <input type="text" id="senderName" placeholder="Enter sender name">
                 </div>
 
-                <div class="form-section">
-                    <h3>Your Gmail</h3>
+                <div class="input-group">
+                    <label>Your Email</label>
                     <input type="email" id="gmailAccount" placeholder="your.email@gmail.com">
                 </div>
 
-                <div class="form-section">
-                    <h3>App Password</h3>
+                <div class="input-group">
+                    <label>App Password</label>
                     <input type="password" id="appPassword" placeholder="Enter app password">
                 </div>
 
-                <div class="form-section">
-                    <h3>Subject</h3>
+                <div class="input-group">
+                    <label>Subject</label>
                     <input type="text" id="subject" placeholder="Email subject">
                 </div>
             </div>
 
             <!-- Right Column -->
-            <div class="form-column">
-                <div class="form-section">
-                    <h3>Message Body</h3>
+            <div class="right-column">
+                <div class="input-group">
+                    <label>Message Body</label>
                     <textarea id="messageBody" placeholder="Type your message here..." rows="6"></textarea>
                 </div>
 
-                <div class="form-section">
-                    <h3>Recipients (comma or newline)</h3>
+                <div class="input-group">
+                    <label>Recipients (comma or newline)</label>
                     <textarea id="recipients" placeholder="Enter email addresses" rows="4"></textarea>
                     <div class="counter">Recipients: <span id="recipientCount">0</span>/30</div>
                 </div>
 
-                <!-- Tips Section -->
-                <div class="form-section tips-section">
-                    <h3>📝 Tips to Avoid Spam</h3>
-                    <div class="tips">
-                        <p>• Avoid words like "free", "winner", "urgent"</p>
-                        <p>• Personalize your message</p>
-                        <p>• Don't use too many recipients at once</p>
-                        <p>• Write natural, conversational content</p>
-                    </div>
-                </div>
-
-                <div class="action-section">
+                <div class="action-buttons">
                     <button id="sendAllBtn" class="send-btn">Send All</button>
                     <div id="statusMessage" class="status"></div>
                 </div>
@@ -73,76 +58,15 @@
         </div>
     </div>
 
-    <!-- Success Popup -->
-    <div id="successPopup" class="popup">
+    <!-- Simple Popup -->
+    <div id="successPopup" class="simple-popup">
         <div class="popup-content">
-            <div class="popup-header success">
-                <i class="fas fa-check-circle"></i>
-                <h3>Success! 🎉</h3>
-            </div>
-            <div class="popup-body">
-                <p id="popupMessage">Your emails have been sent successfully!</p>
-                <div class="popup-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Sent:</span>
-                        <span class="stat-value" id="sentCount">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Failed:</span>
-                        <span class="stat-value" id="failedCount">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Time:</span>
-                        <span class="stat-value" id="timeTaken">0s</span>
-                    </div>
-                </div>
-            </div>
-            <div class="popup-footer">
-                <button id="closePopup" class="popup-btn">OK</button>
-                <button id="viewDetails" class="popup-btn secondary">View Details</button>
-            </div>
+            <h3>Success!</h3>
+            <p id="popupMessage">Emails sent successfully!</p>
+            <button id="closePopup" class="popup-btn">OK</button>
         </div>
     </div>
 
-    <!-- Error Popup -->
-    <div id="errorPopup" class="popup">
-        <div class="popup-content">
-            <div class="popup-header error">
-                <i class="fas fa-exclamation-circle"></i>
-                <h3>Error! ❌</h3>
-            </div>
-            <div class="popup-body">
-                <p id="errorPopupMessage">There was an error sending your emails.</p>
-            </div>
-            <div class="popup-footer">
-                <button id="closeErrorPopup" class="popup-btn">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Popup -->
-    <div id="loadingPopup" class="popup">
-        <div class="popup-content">
-            <div class="popup-header">
-                <i class="fas fa-spinner fa-spin"></i>
-                <h3>Sending Emails...</h3>
-            </div>
-            <div class="popup-body">
-                <p>Please wait while we send your emails</p>
-                <div class="progress-container">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="sendingProgress"></div>
-                    </div>
-                    <div class="progress-text" id="progressText">0%</div>
-                </div>
-                <div class="sending-info">
-                    <span id="currentEmail">Preparing to send...</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
