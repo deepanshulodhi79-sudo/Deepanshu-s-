@@ -7,50 +7,54 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="simple-container">
-        <div class="simple-header">
+    <div class="app-container">
+        <!-- Header -->
+        <div class="app-header">
             <h1>Fast Mail Launcher</h1>
-            <button id="logoutBtn" class="logout-btn">Logout</button>
+            <div class="header-actions">
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
         </div>
 
-        <div class="simple-grid">
+        <!-- Main Content -->
+        <div class="main-content">
             <!-- Left Column -->
-            <div class="left-column">
-                <div class="input-group">
-                    <label>Sender Name</label>
-                    <input type="text" id="senderName" placeholder="Your display name">
+            <div class="form-column">
+                <div class="form-section">
+                    <h3>Sender Name</h3>
+                    <input type="text" id="senderName" placeholder="Enter sender name">
                 </div>
 
-                <div class="input-group">
-                    <label>Your Email</label>
+                <div class="form-section">
+                    <h3>Your Gmail</h3>
                     <input type="email" id="gmailAccount" placeholder="your.email@gmail.com">
                 </div>
 
-                <div class="input-group">
-                    <label>App Password</label>
-                    <input type="password" id="appPassword" placeholder="16-character app password">
+                <div class="form-section">
+                    <h3>App Password</h3>
+                    <input type="password" id="appPassword" placeholder="Enter app password">
                 </div>
 
-                <div class="input-group">
-                    <label>Subject</label>
+                <div class="form-section">
+                    <h3>Subject</h3>
                     <input type="text" id="subject" placeholder="Email subject">
                 </div>
             </div>
 
             <!-- Right Column -->
-            <div class="right-column">
-                <div class="input-group">
-                    <label>Recipients (comma or newline)</label>
-                    <textarea id="recipients" placeholder="Enter email addresses" rows="6"></textarea>
+            <div class="form-column">
+                <div class="form-section">
+                    <h3>Message Body</h3>
+                    <textarea id="messageBody" placeholder="Type your message here..." rows="6"></textarea>
+                </div>
+
+                <div class="form-section">
+                    <h3>Recipients (comma or newline)</h3>
+                    <textarea id="recipients" placeholder="Enter email addresses" rows="4"></textarea>
                     <div class="counter">Recipients: <span id="recipientCount">0</span>/30</div>
                 </div>
 
-                <div class="input-group">
-                    <label>Message Body</label>
-                    <textarea id="messageBody" placeholder="Type your message here..." rows="8"></textarea>
-                </div>
-
-                <div class="action-buttons">
+                <div class="action-section">
                     <button id="sendAllBtn" class="send-btn">Send All</button>
                     <div id="statusMessage" class="status"></div>
                 </div>
