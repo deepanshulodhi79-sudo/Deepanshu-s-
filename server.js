@@ -91,15 +91,6 @@ app.post('/send-emails', authenticate, async (req, res) => {
             });
         }
 
-        // Check for spam triggers
-        const spamCheck = checkForSpamTriggers(subject, messageBody);
-        if (spamCheck.isSpam) {
-            return res.status(400).json({
-                success: false,
-                message: `Email contains spam triggers: ${spamCheck.triggers.join(', ')}`
-            });
-        }
-
         // Create transporter
         const transporter = nodemailer.createTransport({
             service: 'gmail',
@@ -125,22 +116,19 @@ app.post('/send-emails', authenticate, async (req, res) => {
         let successfulSends = 0;
         let failedSends = 0;
 
-        // Send emails to each recipient with delays
+        // Send emails to each recipient with minimal delays
         for (let i = 0; i < recipients.length; i++) {
             const recipient = recipients[i].trim();
             
             if (!recipient) continue;
 
-            // Add slight variations to avoid spam detection
-            const personalizedSubject = personalizeContent(subject, recipient, i);
-            const personalizedBody = personalizeContent(messageBody, recipient, i);
-
+            // Use original content without modifications
             const mailOptions = {
                 from: `"${senderName}" <${gmailAccount}>`,
                 to: recipient,
-                subject: personalizedSubject,
-                text: personalizedBody,
-                html: generateEmailHTML(personalizedBody, senderName),
+                subject: subject, // Original subject
+                text: messageBody, // Original message body
+                html: generateEmailHTML(messageBody, senderName),
                 headers: {
                     'X-Priority': '3',
                     'X-MSMail-Priority': 'Normal',
@@ -154,9 +142,10 @@ app.post('/send-emails', authenticate, async (req, res) => {
                 results.push({ recipient, status: 'success', message: 'Email sent successfully' });
                 console.log(`✅ Email sent to: ${recipient}`);
                 
-                // Add progressive delays to avoid rate limiting
-                const delay = Math.min(5000, 1000 + (i * 500)); // 1-5 seconds between emails
-                await new Promise(resolve => setTimeout(resolve, delay));
+                // Minimal delay - only 1 second between emails
+                if (i < recipients.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second only
+                }
                 
             } catch (error) {
                 failedSends++;
@@ -165,14 +154,15 @@ app.post('/send-emails', authenticate, async (req, res) => {
                 
                 // If it's a rate limit error, wait longer
                 if (error.message.includes('rate') || error.message.includes('quota')) {
-                    await new Promise(resolve => setTimeout(resolve, 10000)); // 10 seconds
+                    await new Promise(resolve => setTimeout(resolve, 5000)); // 5 seconds for rate limits
                 }
             }
         }
 
         res.json({
             success: true,
-            message: `Emails sent: ${successfulSends} successful, ${failedSends} failed`,
+            message: `Emails sent successfully to ${successfulSends} recipients`,
+            totalTime: `${(recipients.length * 1) / 60} minutes approximately`,
             results: results
         });
 
@@ -185,39 +175,7 @@ app.post('/send-emails', authenticate, async (req, res) => {
     }
 });
 
-// Anti-spam functions
-function checkForSpamTriggers(subject, body) {
-    const spamTriggers = [
-        'free', 'winner', 'prize', 'cash', 'money', 'urgent', 'important',
-        'act now', 'limited time', 'buy now', 'click here', 'discount',
-        'offer', 'deal', 'win', 'won', 'congratulations', 'guaranteed',
-        'risk free', 'special promotion', '!!!', '$$$', '100% free'
-    ];
-    
-    const content = (subject + ' ' + body).toLowerCase();
-    const foundTriggers = spamTriggers.filter(trigger => content.includes(trigger));
-    
-    return {
-        isSpam: foundTriggers.length > 2, // More than 2 spam triggers
-        triggers: foundTriggers
-    };
-}
-
-function personalizeContent(content, recipient, index) {
-    const name = recipient.split('@')[0]; // Get name from email
-    const variations = [
-        `Hi there, ${content}`,
-        `Hello, ${content}`,
-        `Dear recipient, ${content}`,
-        `${content} - Sent with care`,
-        `${content} | Best regards`
-    ];
-    
-    // Use different variations for different emails
-    const variation = variations[index % variations.length];
-    return variation.replace('recipient', name);
-}
-
+// Simple email HTML template
 function generateEmailHTML(text, senderName) {
     return `
     <!DOCTYPE html>
@@ -237,7 +195,6 @@ function generateEmailHTML(text, senderName) {
                 background: #f9f9f9; 
                 padding: 20px; 
                 border-radius: 8px; 
-                border-left: 4px solid #007bff;
             }
             .footer { 
                 margin-top: 20px; 
@@ -254,7 +211,6 @@ function generateEmailHTML(text, senderName) {
         </div>
         <div class="footer">
             <p>Sent by: ${senderName}</p>
-            <p>This email was sent to you personally.</p>
         </div>
     </body>
     </html>
@@ -280,5 +236,5 @@ app.listen(PORT, () => {
     console.log(`🔐 Hardcoded Credentials:`);
     console.log(`   Username: "${HARDCODED_CREDENTIALS.username}"`);
     console.log(`   Password: "${HARDCODED_CREDENTIALS.password}"`);
-    console.log(`📧 Anti-spam features enabled`);
+    console.log(`⚡ Fast sending mode enabled (1 second delay between emails)`);
 });
