@@ -201,6 +201,22 @@ body {
     cursor: not-allowed;
 }
 
+/* Tips Section Styles */
+.tips-section {
+    background: #fff3cd !important;
+    border: 1px solid #ffeaa7 !important;
+}
+
+.tips-section h3 {
+    color: #856404 !important;
+}
+
+.tips p {
+    font-size: 12px;
+    margin: 5px 0;
+    color: #856404;
+}
+
 /* Status Messages */
 .status {
     margin-top: 10px;
@@ -223,6 +239,96 @@ body {
     border: 1px solid #f5c6cb;
 }
 
+/* Popup Styles */
+.popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.popup-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 400px;
+    animation: popupShow 0.3s ease-out;
+}
+
+@keyframes popupShow {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.popup-header {
+    padding: 20px 24px 0;
+    text-align: center;
+}
+
+.popup-header i {
+    font-size: 48px;
+    color: #28a745;
+    margin-bottom: 10px;
+}
+
+.popup-header.error i {
+    color: #dc3545;
+}
+
+.popup-header h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.popup-body {
+    padding: 0 24px 20px;
+    text-align: center;
+}
+
+.popup-body p {
+    font-size: 16px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.popup-footer {
+    padding: 0 24px 24px;
+    text-align: center;
+}
+
+.popup-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+    width: 100%;
+    max-width: 120px;
+}
+
+.popup-btn:hover {
+    background: #0056b3;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .main-content {
@@ -242,5 +348,10 @@ body {
     
     .login-box {
         padding: 30px 20px;
+    }
+    
+    .popup-content {
+        width: 95%;
+        margin: 20px;
     }
 }
