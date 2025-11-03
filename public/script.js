@@ -45,28 +45,74 @@ if (document.getElementById('loginBtn')) {
     document.addEventListener('DOMContentLoaded', function() {
         const loginBtn = document.getElementById('loginBtn');
         const loginStatus = document.getElementById('loginStatus');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
         
-        loginBtn.addEventListener('click', function() {
-            const gmailAccount = document.getElementById('gmailAccount').value.trim();
-            const appPassword = document.getElementById('appPassword').value.trim();
+        // Auto-fill credentials for convenience
+        usernameInput.value = 'Dipanshu Lodhi';
+        passwordInput.value = 'Lodhi Ji 15';
+        
+        loginBtn.addEventListener('click', async function() {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
             
-            if (!gmailAccount || !appPassword) {
-                showStatus(loginStatus, 'Please enter both Gmail address and app password', 'error');
+            if (!username || !password) {
+                showStatus(loginStatus, 'Please enter both username and password', 'error');
                 return;
             }
             
-            // Store credentials in sessionStorage
-            sessionStorage.setItem('gmailAccount', gmailAccount);
-            sessionStorage.setItem('appPassword', appPassword);
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
             
-            // Redirect to launcher
-            window.location.href = '/launcher';
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Store session token and username
+                    sessionStorage.setItem('sessionToken', result.sessionToken);
+                    sessionStorage.setItem('username', result.username);
+                    
+                    showStatus(loginStatus, 'Login successful! Redirecting...', 'success');
+                    
+                    // Redirect to launcher after short delay
+                    setTimeout(() => {
+                        window.location.href = '/launcher';
+                    }, 1000);
+                } else {
+                    showStatus(loginStatus, result.message, 'error');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login & Continue';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showStatus(loginStatus, 'Login failed: ' + error.message, 'error');
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login & Continue';
+            }
         });
         
         // Allow Enter key to trigger login
-        document.getElementById('appPassword').addEventListener('keypress', function(e) {
+        passwordInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 loginBtn.click();
+            }
+        });
+        
+        // Auto-focus on password field after username is filled
+        usernameInput.addEventListener('input', function() {
+            if (usernameInput.value === 'Dipanshu Lodhi') {
+                passwordInput.focus();
             }
         });
     });
@@ -76,14 +122,23 @@ if (document.getElementById('loginBtn')) {
 if (document.getElementById('sendAllBtn')) {
     document.addEventListener('DOMContentLoaded', function() {
         // Check if user is logged in
-        const gmailAccount = sessionStorage.getItem('gmailAccount');
-        if (!gmailAccount) {
+        const sessionToken = sessionStorage.getItem('sessionToken');
+        const username = sessionStorage.getItem('username');
+        
+        if (!sessionToken || !username) {
             window.location.href = '/';
             return;
         }
         
-        // Set user email in header
-        document.getElementById('userEmail').textContent = gmailAccount;
+        // Set user information in header
+        document.getElementById('userEmail').textContent = username;
+        
+        // Add welcome message
+        const header = document.querySelector('header');
+        const welcomeDiv = document.createElement('div');
+        welcomeDiv.className = 'user-welcome';
+        welcomeDiv.innerHTML = `<i class="fas fa-user-check"></i> Welcome, ${username}!`;
+        header.appendChild(welcomeDiv);
         
         // Elements
         const recipientsTextarea = document.getElementById('recipients');
@@ -104,14 +159,14 @@ if (document.getElementById('sendAllBtn')) {
         // Send All Emails
         sendAllBtn.addEventListener('click', async function() {
             const senderName = document.getElementById('senderName').value.trim();
-            const gmailAccount = sessionStorage.getItem('gmailAccount');
-            const appPassword = sessionStorage.getItem('appPassword');
+            const gmailAccount = document.getElementById('gmailAccount') ? document.getElementById('gmailAccount').value.trim() : '';
+            const appPassword = document.getElementById('appPassword') ? document.getElementById('appPassword').value.trim() : '';
             const subject = document.getElementById('subject').value.trim();
             const messageBody = document.getElementById('messageBody').value.trim();
             const recipientsText = recipientsTextarea.value;
             
             // Validation
-            if (!senderName || !subject || !messageBody || !recipientsText) {
+            if (!senderName || !gmailAccount || !appPassword || !subject || !messageBody || !recipientsText) {
                 showStatus(statusMessage, 'Please fill in all fields', 'error');
                 return;
             }
@@ -143,6 +198,7 @@ if (document.getElementById('sendAllBtn')) {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': sessionToken
                     },
                     body: JSON.stringify({
                         senderName,
@@ -188,14 +244,27 @@ if (document.getElementById('sendAllBtn')) {
         });
         
         // Logout
-        logoutBtn.addEventListener('click', function() {
-            sessionStorage.clear();
-            window.location.href = '/';
+        logoutBtn.addEventListener('click', async function() {
+            try {
+                await fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': sessionToken
+                    }
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            } finally {
+                sessionStorage.clear();
+                window.location.href = '/';
+            }
         });
         
         // Clear All
         clearBtn.addEventListener('click', function() {
             document.getElementById('senderName').value = '';
+            if (document.getElementById('gmailAccount')) document.getElementById('gmailAccount').value = '';
+            if (document.getElementById('appPassword')) document.getElementById('appPassword').value = '';
             document.getElementById('subject').value = '';
             document.getElementById('messageBody').value = '';
             recipientsTextarea.value = '';
