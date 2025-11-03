@@ -211,11 +211,13 @@ if (document.getElementById('sendAllBtn')) {
                 
             } catch (error) {
                 console.error('Error sending emails:', error);
-                showStatus(statusMessage, '✗ Failed to send emails', 'error');
+                showStatus(statusMessage, '✗ Failed to send emails: ' + error.message, 'error');
             } finally {
                 sendAllBtn.disabled = false;
                 clearBtn.disabled = false;
                 progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+                progressText.textContent = '0%';
             }
         });
         
@@ -248,5 +250,8 @@ if (document.getElementById('sendAllBtn')) {
             resultsContainer.style.display = 'none';
             showStatus(statusMessage, 'Form cleared successfully', 'success');
         });
+        
+        // Initialize
+        updateRecipientCount();
     });
 }
