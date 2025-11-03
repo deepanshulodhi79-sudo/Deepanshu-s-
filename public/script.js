@@ -122,13 +122,7 @@ if (document.getElementById('sendAllBtn')) {
                     popupMessage.textContent = result.message;
                     showPopup(successPopup);
                     
-                    // Clear form
-                    setTimeout(() => {
-                        document.getElementById('subject').value = '';
-                        document.getElementById('messageBody').value = '';
-                        document.getElementById('recipients').value = '';
-                        updateRecipientCount();
-                    }, 2000);
+                    // ❌ REMOVED AUTO-CLEAR CODE - Form ab clear nahi hoga
                     
                 } else {
                     showStatus(statusMessage, result.message, 'error');
