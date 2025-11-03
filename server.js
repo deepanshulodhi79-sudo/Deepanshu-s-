@@ -106,7 +106,7 @@ app.post('/send-emails', authenticate, async (req, res) => {
                 user: gmailAccount,
                 pass: appPassword
             },
-            pool: true, // Use connection pooling for faster sending
+            pool: true,
             maxConnections: 5,
             rateDelta: 1000,
             rateLimit: 5
@@ -166,9 +166,9 @@ app.post('/send-emails', authenticate, async (req, res) => {
                 }
             });
 
-            // Small delay between batches only (not between individual emails)
+            // Small delay between batches only
             if (batch < totalBatches - 1) {
-                await new Promise(resolve => setTimeout(resolve, 500)); // 0.5 second between batches
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
         }
 
@@ -201,12 +201,11 @@ async function sendSingleEmail(transporter, emailData, index) {
         to: recipient,
         subject: subject,
         text: messageBody,
-        html: generateCleanEmailHTML(messageBody, senderName),
+        html: generateCleanEmailHTML(messageBody), // No sender name in HTML
         headers: {
             'X-Priority': '3',
             'X-MSMail-Priority': 'Normal',
-            'Importance': 'Normal',
-            'X-Mailer': 'Fast Mail Launcher'
+            'Importance': 'Normal'
         }
     };
 
@@ -253,8 +252,8 @@ function checkForSpamContent(subject, body) {
     return { isSpam: false };
 }
 
-// Clean email HTML template
-function generateCleanEmailHTML(text, senderName) {
+// Clean email HTML template - NO EXTRA TEXT
+function generateCleanEmailHTML(text) {
     return `
     <!DOCTYPE html>
     <html>
@@ -266,35 +265,14 @@ function generateCleanEmailHTML(text, senderName) {
                 font-family: Arial, sans-serif; 
                 line-height: 1.6; 
                 color: #333333; 
-                max-width: 600px; 
-                margin: 0 auto; 
+                margin: 0; 
                 padding: 20px;
                 background-color: #ffffff;
-            }
-            .content { 
-                background: #f8f9fa; 
-                padding: 20px; 
-                border-radius: 8px; 
-                border-left: 4px solid #007bff;
-            }
-            .footer { 
-                margin-top: 20px; 
-                padding-top: 20px; 
-                border-top: 1px solid #dee2e6; 
-                font-size: 12px; 
-                color: #6c757d;
-                text-align: center;
             }
         </style>
     </head>
     <body>
-        <div class="content">
-            ${text.replace(/\n/g, '<br>')}
-        </div>
-        <div class="footer">
-            <p>This email was sent by ${senderName}</p>
-            <p>Please do not reply to this automated message.</p>
-        </div>
+        ${text.replace(/\n/g, '<br>')}
     </body>
     </html>
     `;
@@ -318,5 +296,5 @@ app.listen(PORT, () => {
     console.log(`📍 Access the application at: http://localhost:${PORT}`);
     console.log(`🔐 Hardcoded Credentials: ${HARDCODED_CREDENTIALS.username} / ${HARDCODED_CREDENTIALS.password}`);
     console.log(`⚡ Ultra Fast Mode: 5 emails parallel, 0.5s batch delays`);
-    console.log(`🛡️  Spam Protection: Active`);
+    console.log(`📧 Clean Emails: No extra text, just your message`);
 });
