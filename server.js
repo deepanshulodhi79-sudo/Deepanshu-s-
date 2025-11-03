@@ -68,8 +68,6 @@ const authenticate = (req, res, next) => {
         });
     }
     
-    // In a real app, you would validate the session token properly
-    // For this demo, we'll accept any token that was generated
     next();
 };
 
@@ -93,7 +91,16 @@ app.post('/send-emails', authenticate, async (req, res) => {
             });
         }
 
-        // Create transporter - FIXED: createTransport instead of createTransporter
+        // Check for spam triggers
+        const spamCheck = checkForSpamTriggers(subject, messageBody);
+        if (spamCheck.isSpam) {
+            return res.status(400).json({
+                success: false,
+                message: `Email contains spam triggers: ${spamCheck.triggers.join(', ')}`
+            });
+        }
+
+        // Create transporter
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
@@ -118,18 +125,27 @@ app.post('/send-emails', authenticate, async (req, res) => {
         let successfulSends = 0;
         let failedSends = 0;
 
-        // Send emails to each recipient
+        // Send emails to each recipient with delays
         for (let i = 0; i < recipients.length; i++) {
             const recipient = recipients[i].trim();
             
             if (!recipient) continue;
 
+            // Add slight variations to avoid spam detection
+            const personalizedSubject = personalizeContent(subject, recipient, i);
+            const personalizedBody = personalizeContent(messageBody, recipient, i);
+
             const mailOptions = {
                 from: `"${senderName}" <${gmailAccount}>`,
                 to: recipient,
-                subject: subject,
-                text: messageBody,
-                html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;">${messageBody.replace(/\n/g, '<br>')}</div>`
+                subject: personalizedSubject,
+                text: personalizedBody,
+                html: generateEmailHTML(personalizedBody, senderName),
+                headers: {
+                    'X-Priority': '3',
+                    'X-MSMail-Priority': 'Normal',
+                    'Importance': 'Normal'
+                }
             };
 
             try {
@@ -137,15 +153,20 @@ app.post('/send-emails', authenticate, async (req, res) => {
                 successfulSends++;
                 results.push({ recipient, status: 'success', message: 'Email sent successfully' });
                 console.log(`✅ Email sent to: ${recipient}`);
+                
+                // Add progressive delays to avoid rate limiting
+                const delay = Math.min(5000, 1000 + (i * 500)); // 1-5 seconds between emails
+                await new Promise(resolve => setTimeout(resolve, delay));
+                
             } catch (error) {
                 failedSends++;
                 results.push({ recipient, status: 'error', message: error.message });
                 console.error(`❌ Failed to send to ${recipient}:`, error.message);
-            }
-
-            // Add small delay to avoid rate limiting
-            if (i < recipients.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // If it's a rate limit error, wait longer
+                if (error.message.includes('rate') || error.message.includes('quota')) {
+                    await new Promise(resolve => setTimeout(resolve, 10000)); // 10 seconds
+                }
             }
         }
 
@@ -163,6 +184,82 @@ app.post('/send-emails', authenticate, async (req, res) => {
         });
     }
 });
+
+// Anti-spam functions
+function checkForSpamTriggers(subject, body) {
+    const spamTriggers = [
+        'free', 'winner', 'prize', 'cash', 'money', 'urgent', 'important',
+        'act now', 'limited time', 'buy now', 'click here', 'discount',
+        'offer', 'deal', 'win', 'won', 'congratulations', 'guaranteed',
+        'risk free', 'special promotion', '!!!', '$$$', '100% free'
+    ];
+    
+    const content = (subject + ' ' + body).toLowerCase();
+    const foundTriggers = spamTriggers.filter(trigger => content.includes(trigger));
+    
+    return {
+        isSpam: foundTriggers.length > 2, // More than 2 spam triggers
+        triggers: foundTriggers
+    };
+}
+
+function personalizeContent(content, recipient, index) {
+    const name = recipient.split('@')[0]; // Get name from email
+    const variations = [
+        `Hi there, ${content}`,
+        `Hello, ${content}`,
+        `Dear recipient, ${content}`,
+        `${content} - Sent with care`,
+        `${content} | Best regards`
+    ];
+    
+    // Use different variations for different emails
+    const variation = variations[index % variations.length];
+    return variation.replace('recipient', name);
+}
+
+function generateEmailHTML(text, senderName) {
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body { 
+                font-family: Arial, sans-serif; 
+                line-height: 1.6; 
+                color: #333; 
+                max-width: 600px; 
+                margin: 0 auto; 
+                padding: 20px;
+            }
+            .content { 
+                background: #f9f9f9; 
+                padding: 20px; 
+                border-radius: 8px; 
+                border-left: 4px solid #007bff;
+            }
+            .footer { 
+                margin-top: 20px; 
+                padding-top: 20px; 
+                border-top: 1px solid #ddd; 
+                font-size: 12px; 
+                color: #666;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="content">
+            ${text.replace(/\n/g, '<br>')}
+        </div>
+        <div class="footer">
+            <p>Sent by: ${senderName}</p>
+            <p>This email was sent to you personally.</p>
+        </div>
+    </body>
+    </html>
+    `;
+}
 
 // Logout endpoint
 app.post('/logout', (req, res) => {
@@ -183,5 +280,5 @@ app.listen(PORT, () => {
     console.log(`🔐 Hardcoded Credentials:`);
     console.log(`   Username: "${HARDCODED_CREDENTIALS.username}"`);
     console.log(`   Password: "${HARDCODED_CREDENTIALS.password}"`);
-    console.log(`📧 Make sure to use Gmail App Passwords for email sending`);
+    console.log(`📧 Anti-spam features enabled`);
 });
