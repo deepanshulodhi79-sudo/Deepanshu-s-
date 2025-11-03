@@ -3,126 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fast Mail Launcher - Send Emails</title>
+    <title>Dashboard - Fast Mail Launcher</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1><i class="fas fa-paper-plane"></i> Fast Mail Launcher</h1>
-            <div class="subtitle">Secure Bulk Email Sender</div>
-            <div class="user-info">
-                <span id="userEmail"></span>
-                <button id="logoutBtn" class="secondary-btn small">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-            </div>
-        </header>
-        
-        <div class="content">
-            <div class="section">
-                <div class="section-title">
-                    <i class="fas fa-user-shield"></i>
-                    Authentication Status
-                </div>
-                <div class="user-welcome">
-                    <i class="fas fa-check-circle"></i> You are logged in as: <strong id="displayUsername"></strong>
-                </div>
-            </div>
-            
-            <div class="section">
-                <div class="section-title">
-                    <i class="fas fa-user"></i>
-                    Sender Information
-                </div>
-                
-                <div class="form-group">
-                    <label for="senderName">Your Name</label>
-                    <input type="text" id="senderName" placeholder="Enter your name as it should appear to recipients">
-                </div>
-                
-                <div class="form-group">
-                    <label for="gmailAccount">Your Gmail Address</label>
-                    <input type="email" id="gmailAccount" placeholder="your.email@gmail.com">
-                </div>
-                
-                <div class="form-group">
-                    <label for="appPassword">Gmail App Password</label>
-                    <input type="password" id="appPassword" placeholder="16-character app password">
-                    <div class="help-text">
-                        <a href="https://support.google.com/accounts/answer/185833" target="_blank">
-                            <i class="fas fa-question-circle"></i> How to create an app password?
-                        </a>
+        <div class="dashboard">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <div class="brand">
+                        <div class="logo">
+                            <i class="fas fa-paper-plane"></i>
+                        </div>
+                        <h1>Fast Mail Launcher</h1>
                     </div>
                 </div>
-            </div>
-            
-            <div class="section">
-                <div class="section-title">
-                    <i class="fas fa-envelope"></i>
-                    Email Content
-                </div>
-                
-                <div class="form-group">
-                    <label for="subject">Subject</label>
-                    <input type="text" id="subject" placeholder="Email subject">
-                </div>
-                
-                <div class="form-group">
-                    <label for="messageBody">Message Body</label>
-                    <textarea id="messageBody" placeholder="Type your email message here..."></textarea>
-                </div>
-            </div>
-            
-            <div class="section">
-                <div class="section-title">
-                    <i class="fas fa-users"></i>
-                    Recipients
-                </div>
-                
-                <div class="form-group">
-                    <label for="recipients">Recipient Email Addresses</label>
-                    <textarea id="recipients" class="recipients-area" placeholder="Enter email addresses separated by commas or new lines (max 30)"></textarea>
-                    <div class="counter">
-                        <span>Recipients: <span id="recipientCount" class="recipient-count">0</span>/30</span>
-                        <span id="recipientWarning" style="color: #ea4335; display: none;">Maximum 30 recipients allowed</span>
+                <div class="header-right">
+                    <div class="user-profile">
+                        <span class="welcome-text">Welcome, <strong id="userEmail">Dipanshu Lodhi</strong></span>
+                        <button id="logoutBtn" class="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
                     </div>
                 </div>
-            </div>
-            
-            <div class="button-group">
-                <button id="sendAllBtn" class="primary-btn">
-                    <i class="fas fa-paper-plane"></i> Send All Emails
-                </button>
-                <button id="clearBtn" class="secondary-btn">
-                    <i class="fas fa-broom"></i> Clear All
-                </button>
-            </div>
-            
-            <div id="statusMessage" class="status"></div>
-            
-            <div class="progress-container" id="progressContainer">
-                <div class="progress-bar">
-                    <div class="progress" id="progressBar"></div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="dashboard-content">
+                <!-- Authentication Status -->
+                <div class="status-card">
+                    <div class="status-header">
+                        <i class="fas fa-user-check"></i>
+                        <h3>Authentication Status</h3>
+                    </div>
+                    <div class="status-content">
+                        <div class="status-badge active">
+                            <i class="fas fa-check-circle"></i>
+                            Verified User: <strong id="displayUsername">Dipanshu Lodhi</strong>
+                        </div>
+                    </div>
                 </div>
-                <div class="progress-text" id="progressText">Sending emails... 0%</div>
-            </div>
-            
-            <div class="results-container" id="resultsContainer" style="display: none;">
-                <h3>Sending Results:</h3>
-                <div id="resultsList" class="results-list"></div>
-            </div>
-            
-            <div class="instructions">
-                <h3>How to use:</h3>
-                <ul>
-                    <li>Enter your name as it should appear to recipients</li>
-                    <li>Provide your Gmail address and App Password</li>
-                    <li>Write your email subject and message</li>
-                    <li>Enter up to 30 recipient email addresses (comma or newline separated)</li>
-                    <li>Click "Send All Emails" to send your message to all recipients</li>
-                </ul>
-            </div>
+
+                <!-- Sender Information -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-user-circle"></i>
+                        <h3>Sender Profile</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label>Display Name</label>
+                                <input type="text" id="senderName" placeholder="How recipients will see you">
+                            </div>
+                            <div class="input-group">
+                                <label>Gmail Address</label>
+                                <input type="email" id="gmailAccount" placeholder="your.email@gmail.com">
+                            </div>
+                            <div class="input-group">
+                                <label>App Password</label>
+                                <input type="password" id="appPassword" placeholder="16-character app password">
+                                <div class="help-link">
+                                    <a href="https://support.google.com/accounts/answer/185833" target="_blank">
+                                        <i class="fas fa-question-circle"></i>
+                                        Generate App Password
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Content -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-envelope"></i>
+                        <h3>Email Content</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-grid">
+                            <div class="input-group full-width">
+                                <label>Subject Line</label>
+                                <input type="text" id="subject" placeholder="Enter email subject">
+                            </div>
+                            <div class="input-group full-width">
+                                <label>Message Body</label>
+                                <textarea id="messageBody" placeholder="Compose your email message..." rows="6"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recipients -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-users"></i>
+                        <h3>Recipient Management</h3>
+                        <div class="recipient-counter">
+                            <span id="recipientCount">0</span>/30
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="input-group full-width">
+                            <label>Email Addresses</label>
+                            <textarea id="recipients" placeholder="Enter recipient emails (comma or newline separated)" rows="4"></textarea>
+                            <div class="counter-hint" id="recipientWarning">
+                                Maximum 30 recipients allowed
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-bar">
+                    <button id="sendAllBtn" class="primary-action">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Send All Emails</span>
+                    </button>
+                    <button id="clearBtn" class="secondary-action">
+                        <i class="fas fa-eraser"></i>
+                        <span>Clear Form</span>
+                    </button>
+                </div>
+
+                <!-- Status & Progress -->
+                <div id="statusMessage" class="status-message"></div>
+
+                <div class="progress-section" id="progressContainer">
+                    <div class="progress-header">
+                        <span>Sending Progress</span>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressBar"></div>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div class="results-card" id="resultsContainer">
+                    <div class="card-header">
+                        <i class="fas fa-list-check"></i>
+                        <h3>Sending Results</h3>
+                    </div>
+                    <div class="results-list" id="resultsList"></div>
+                </div>
+            </main>
         </div>
     </div>
 
