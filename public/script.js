@@ -13,6 +13,9 @@ if (document.getElementById('loginBtn')) {
                 return;
             }
             
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            
             try {
                 const response = await fetch('/login', {
                     method: 'POST',
@@ -33,6 +36,9 @@ if (document.getElementById('loginBtn')) {
                 }
             } catch (error) {
                 showStatus(loginStatus, 'Login failed', 'error');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
             }
         });
         
@@ -47,7 +53,10 @@ if (document.getElementById('loginBtn')) {
 if (document.getElementById('sendAllBtn')) {
     document.addEventListener('DOMContentLoaded', function() {
         const sessionToken = sessionStorage.getItem('sessionToken');
-        if (!sessionToken) window.location.href = '/';
+        if (!sessionToken) {
+            window.location.href = '/';
+            return;
+        }
         
         // Elements
         const recipientsTextarea = document.getElementById('recipients');
@@ -84,7 +93,7 @@ if (document.getElementById('sendAllBtn')) {
                 .filter(email => email !== '');
             
             if (recipients.length > 30) {
-                showStatus(statusMessage, 'Maximum 30 recipients', 'error');
+                showStatus(statusMessage, 'Maximum 30 recipients allowed', 'error');
                 return;
             }
             
