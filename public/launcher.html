@@ -10,7 +10,7 @@
     <div class="container">
         <header>
             <h1><i class="fas fa-paper-plane"></i> Fast Mail Launcher</h1>
-            <div class="subtitle">Send up to 30 emails at once</div>
+            <div class="subtitle">Secure Bulk Email Sender</div>
             <div class="user-info">
                 <span id="userEmail"></span>
                 <button id="logoutBtn" class="secondary-btn small">
@@ -22,6 +22,16 @@
         <div class="content">
             <div class="section">
                 <div class="section-title">
+                    <i class="fas fa-user-shield"></i>
+                    Authentication Status
+                </div>
+                <div class="user-welcome">
+                    <i class="fas fa-check-circle"></i> You are logged in as: <strong id="displayUsername"></strong>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">
                     <i class="fas fa-user"></i>
                     Sender Information
                 </div>
@@ -29,6 +39,21 @@
                 <div class="form-group">
                     <label for="senderName">Your Name</label>
                     <input type="text" id="senderName" placeholder="Enter your name as it should appear to recipients">
+                </div>
+                
+                <div class="form-group">
+                    <label for="gmailAccount">Your Gmail Address</label>
+                    <input type="email" id="gmailAccount" placeholder="your.email@gmail.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="appPassword">Gmail App Password</label>
+                    <input type="password" id="appPassword" placeholder="16-character app password">
+                    <div class="help-text">
+                        <a href="https://support.google.com/accounts/answer/185833" target="_blank">
+                            <i class="fas fa-question-circle"></i> How to create an app password?
+                        </a>
+                    </div>
                 </div>
             </div>
             
@@ -92,6 +117,7 @@
                 <h3>How to use:</h3>
                 <ul>
                     <li>Enter your name as it should appear to recipients</li>
+                    <li>Provide your Gmail address and App Password</li>
                     <li>Write your email subject and message</li>
                     <li>Enter up to 30 recipient email addresses (comma or newline separated)</li>
                     <li>Click "Send All Emails" to send your message to all recipients</li>
