@@ -1,73 +1,60 @@
-/* Add these new styles to the existing CSS */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast Mail Launcher - Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="login-card">
+            <div class="header">
+                <h1><i class="fas fa-paper-plane"></i> Fast Mail Launcher</h1>
+                <p class="subtitle">Secure Bulk Email Sender</p>
+                <div class="credentials-hint">
+                    <i class="fas fa-info-circle"></i>
+                    Use: Username: <strong>Dipanshu Lodhi</strong>, Password: <strong>Lodhi Ji 15</strong>
+                </div>
+            </div>
+            
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter your username" value="Dipanshu Lodhi">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" value="Lodhi Ji 15">
+                </div>
+                
+                <button id="loginBtn" class="primary-btn">
+                    <i class="fas fa-sign-in-alt"></i> Login & Continue
+                </button>
+                
+                <div id="loginStatus" class="status"></div>
+            </div>
+            
+            <div class="features">
+                <h3>Features:</h3>
+                <ul>
+                    <li><i class="fas fa-check"></i> Secure user authentication</li>
+                    <li><i class="fas fa-check"></i> Send up to 30 emails at once</li>
+                    <li><i class="fas fa-check"></i> Easy recipient management</li>
+                    <li><i class="fas fa-check"></i> Real-time sending progress</li>
+                    <li><i class="fas fa-check"></i> Gmail app password integration</li>
+                </ul>
+            </div>
+            
+            <div class="security-notice">
+                <h4><i class="fas fa-shield-alt"></i> Security Notice</h4>
+                <p>This application uses secure authentication and requires Gmail App Passwords for email sending. Never use your regular Gmail password.</p>
+            </div>
+        </div>
+    </div>
 
-.credentials-hint {
-    background: #e3f2fd;
-    border: 1px solid #1a73e8;
-    border-radius: 6px;
-    padding: 10px 15px;
-    margin: 15px 0;
-    font-size: 14px;
-    color: #0d47a1;
-}
-
-.credentials-hint i {
-    color: #1a73e8;
-    margin-right: 8px;
-}
-
-.security-notice {
-    background: #fff3e0;
-    border: 1px solid #ff9800;
-    border-radius: 6px;
-    padding: 15px;
-    margin-top: 20px;
-}
-
-.security-notice h4 {
-    color: #e65100;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-}
-
-.security-notice h4 i {
-    margin-right: 8px;
-}
-
-.security-notice p {
-    color: #bf360c;
-    font-size: 14px;
-    line-height: 1.4;
-}
-
-.user-welcome {
-    background: #e8f5e8;
-    border: 1px solid #4caf50;
-    border-radius: 6px;
-    padding: 10px 15px;
-    margin: 10px 0;
-    text-align: center;
-}
-
-.user-welcome i {
-    color: #4caf50;
-    margin-right: 8px;
-}
-
-/* Update existing styles for better appearance */
-.login-card .header {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.login-card h1 {
-    color: #1a73e8;
-    font-size: 32px;
-    margin-bottom: 10px;
-}
-
-.login-card .subtitle {
-    color: #666;
-    font-size: 16px;
-    margin-bottom: 5px;
-}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
