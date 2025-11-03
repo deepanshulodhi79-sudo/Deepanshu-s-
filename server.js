@@ -93,8 +93,8 @@ app.post('/send-emails', authenticate, async (req, res) => {
             });
         }
 
-        // Create transporter
-        const transporter = nodemailer.createTransporter({
+        // Create transporter - FIXED: createTransport instead of createTransporter
+        const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: gmailAccount,
@@ -105,7 +105,9 @@ app.post('/send-emails', authenticate, async (req, res) => {
         // Verify transporter configuration
         try {
             await transporter.verify();
+            console.log('Gmail authentication successful');
         } catch (error) {
+            console.error('Gmail authentication failed:', error);
             return res.status(400).json({ 
                 success: false, 
                 message: 'Gmail authentication failed. Please check your email and app password.' 
@@ -127,16 +129,18 @@ app.post('/send-emails', authenticate, async (req, res) => {
                 to: recipient,
                 subject: subject,
                 text: messageBody,
-                html: messageBody.replace(/\n/g, '<br>')
+                html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;">${messageBody.replace(/\n/g, '<br>')}</div>`
             };
 
             try {
                 await transporter.sendMail(mailOptions);
                 successfulSends++;
                 results.push({ recipient, status: 'success', message: 'Email sent successfully' });
+                console.log(`✅ Email sent to: ${recipient}`);
             } catch (error) {
                 failedSends++;
                 results.push({ recipient, status: 'error', message: error.message });
+                console.error(`❌ Failed to send to ${recipient}:`, error.message);
             }
 
             // Add small delay to avoid rate limiting
@@ -174,7 +178,10 @@ app.get('/health', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Fast Mail Launcher server running on port ${PORT}`);
-    console.log(`Access the application at: http://localhost:${PORT}`);
-    console.log(`Hardcoded Credentials - Username: "${HARDCODED_CREDENTIALS.username}", Password: "${HARDCODED_CREDENTIALS.password}"`);
+    console.log(`🚀 Fast Mail Launcher server running on port ${PORT}`);
+    console.log(`📍 Access the application at: http://localhost:${PORT}`);
+    console.log(`🔐 Hardcoded Credentials:`);
+    console.log(`   Username: "${HARDCODED_CREDENTIALS.username}"`);
+    console.log(`   Password: "${HARDCODED_CREDENTIALS.password}"`);
+    console.log(`📧 Make sure to use Gmail App Passwords for email sending`);
 });
