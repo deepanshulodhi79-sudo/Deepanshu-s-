@@ -7,6 +7,12 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Hardcoded login credentials
+const HARDCODED_CREDENTIALS = {
+    username: 'Dipanshu Lodhi',
+    password: 'Lodhi Ji 15'
+};
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -22,8 +28,53 @@ app.get('/launcher', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'launcher.html'));
 });
 
-// Email sending endpoint
-app.post('/send-emails', async (req, res) => {
+// Login endpoint
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({
+            success: false,
+            message: 'Username and password are required'
+        });
+    }
+
+    if (username === HARDCODED_CREDENTIALS.username && password === HARDCODED_CREDENTIALS.password) {
+        // Generate a simple session token
+        const sessionToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        
+        res.json({
+            success: true,
+            message: 'Login successful',
+            sessionToken: sessionToken,
+            username: username
+        });
+    } else {
+        res.status(401).json({
+            success: false,
+            message: 'Invalid username or password'
+        });
+    }
+});
+
+// Middleware to check authentication
+const authenticate = (req, res, next) => {
+    const sessionToken = req.headers.authorization;
+    
+    if (!sessionToken) {
+        return res.status(401).json({
+            success: false,
+            message: 'Access denied. Please login first.'
+        });
+    }
+    
+    // In a real app, you would validate the session token properly
+    // For this demo, we'll accept any token that was generated
+    next();
+};
+
+// Email sending endpoint (protected)
+app.post('/send-emails', authenticate, async (req, res) => {
     try {
         const { senderName, gmailAccount, appPassword, subject, messageBody, recipients } = req.body;
 
@@ -109,6 +160,14 @@ app.post('/send-emails', async (req, res) => {
     }
 });
 
+// Logout endpoint
+app.post('/logout', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Logged out successfully'
+    });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Fast Mail Launcher is running' });
@@ -117,4 +176,5 @@ app.get('/health', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Fast Mail Launcher server running on port ${PORT}`);
     console.log(`Access the application at: http://localhost:${PORT}`);
+    console.log(`Hardcoded Credentials - Username: "${HARDCODED_CREDENTIALS.username}", Password: "${HARDCODED_CREDENTIALS.password}"`);
 });
