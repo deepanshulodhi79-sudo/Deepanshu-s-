@@ -1,7 +1,7 @@
 // Common utility functions
 function showStatus(element, message, type) {
     element.textContent = message;
-    element.className = 'status ' + type;
+    element.className = 'status-message ' + type;
     element.style.display = 'block';
     
     if (type === 'success') {
@@ -26,16 +26,14 @@ function updateRecipientCount() {
     recipientCount.textContent = count;
     
     if (count > 30) {
-        if (recipientWarning) recipientWarning.style.display = 'inline';
+        if (recipientWarning) recipientWarning.style.display = 'block';
         if (sendAllBtn) {
             sendAllBtn.disabled = true;
-            sendAllBtn.style.opacity = '0.6';
         }
     } else {
         if (recipientWarning) recipientWarning.style.display = 'none';
         if (sendAllBtn) {
             sendAllBtn.disabled = false;
-            sendAllBtn.style.opacity = '1';
         }
     }
 }
@@ -47,10 +45,6 @@ if (document.getElementById('loginBtn')) {
         const loginStatus = document.getElementById('loginStatus');
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
-        
-        // Auto-fill credentials for convenience
-        usernameInput.value = 'Dipanshu Lodhi';
-        passwordInput.value = 'Lodhi Ji 15';
         
         loginBtn.addEventListener('click', async function() {
             const username = usernameInput.value.trim();
@@ -79,40 +73,30 @@ if (document.getElementById('loginBtn')) {
                 const result = await response.json();
                 
                 if (result.success) {
-                    // Store session token and username
                     sessionStorage.setItem('sessionToken', result.sessionToken);
                     sessionStorage.setItem('username', result.username);
                     
-                    showStatus(loginStatus, 'Login successful! Redirecting...', 'success');
+                    showStatus(loginStatus, '✓ Authentication successful', 'success');
                     
-                    // Redirect to launcher after short delay
                     setTimeout(() => {
                         window.location.href = '/launcher';
                     }, 1000);
                 } else {
-                    showStatus(loginStatus, result.message, 'error');
+                    showStatus(loginStatus, '✗ ' + result.message, 'error');
                     loginBtn.disabled = false;
-                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login & Continue';
+                    loginBtn.innerHTML = '<span class="btn-text">Access Dashboard</span><i class="fas fa-arrow-right"></i>';
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                showStatus(loginStatus, 'Login failed: ' + error.message, 'error');
+                showStatus(loginStatus, '✗ Connection failed', 'error');
                 loginBtn.disabled = false;
-                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login & Continue';
+                loginBtn.innerHTML = '<span class="btn-text">Access Dashboard</span><i class="fas fa-arrow-right"></i>';
             }
         });
         
-        // Allow Enter key to trigger login
         passwordInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 loginBtn.click();
-            }
-        });
-        
-        // Auto-focus on password field after username is filled
-        usernameInput.addEventListener('input', function() {
-            if (usernameInput.value === 'Dipanshu Lodhi') {
-                passwordInput.focus();
             }
         });
     });
@@ -121,7 +105,6 @@ if (document.getElementById('loginBtn')) {
 // Launcher page functionality
 if (document.getElementById('sendAllBtn')) {
     document.addEventListener('DOMContentLoaded', function() {
-        // Check if user is logged in
         const sessionToken = sessionStorage.getItem('sessionToken');
         const username = sessionStorage.getItem('username');
         
@@ -130,15 +113,8 @@ if (document.getElementById('sendAllBtn')) {
             return;
         }
         
-        // Set user information in header
         document.getElementById('userEmail').textContent = username;
-        
-        // Add welcome message
-        const header = document.querySelector('header');
-        const welcomeDiv = document.createElement('div');
-        welcomeDiv.className = 'user-welcome';
-        welcomeDiv.innerHTML = `<i class="fas fa-user-check"></i> Welcome, ${username}!`;
-        header.appendChild(welcomeDiv);
+        document.getElementById('displayUsername').textContent = username;
         
         // Elements
         const recipientsTextarea = document.getElementById('recipients');
@@ -159,15 +135,15 @@ if (document.getElementById('sendAllBtn')) {
         // Send All Emails
         sendAllBtn.addEventListener('click', async function() {
             const senderName = document.getElementById('senderName').value.trim();
-            const gmailAccount = document.getElementById('gmailAccount') ? document.getElementById('gmailAccount').value.trim() : '';
-            const appPassword = document.getElementById('appPassword') ? document.getElementById('appPassword').value.trim() : '';
+            const gmailAccount = document.getElementById('gmailAccount').value.trim();
+            const appPassword = document.getElementById('appPassword').value.trim();
             const subject = document.getElementById('subject').value.trim();
             const messageBody = document.getElementById('messageBody').value.trim();
             const recipientsText = recipientsTextarea.value;
             
             // Validation
             if (!senderName || !gmailAccount || !appPassword || !subject || !messageBody || !recipientsText) {
-                showStatus(statusMessage, 'Please fill in all fields', 'error');
+                showStatus(statusMessage, 'Please fill in all required fields', 'error');
                 return;
             }
             
@@ -188,7 +164,7 @@ if (document.getElementById('sendAllBtn')) {
             // Show progress
             progressContainer.style.display = 'block';
             progressBar.style.width = '0%';
-            progressText.textContent = 'Sending emails... 0%';
+            progressText.textContent = '0%';
             sendAllBtn.disabled = true;
             clearBtn.disabled = true;
             resultsContainer.style.display = 'none';
@@ -213,7 +189,7 @@ if (document.getElementById('sendAllBtn')) {
                 const result = await response.json();
                 
                 if (result.success) {
-                    showStatus(statusMessage, result.message, 'success');
+                    showStatus(statusMessage, '✓ ' + result.message, 'success');
                     
                     // Show detailed results
                     if (result.results) {
@@ -230,12 +206,12 @@ if (document.getElementById('sendAllBtn')) {
                         resultsContainer.style.display = 'block';
                     }
                 } else {
-                    showStatus(statusMessage, result.message, 'error');
+                    showStatus(statusMessage, '✗ ' + result.message, 'error');
                 }
                 
             } catch (error) {
                 console.error('Error sending emails:', error);
-                showStatus(statusMessage, 'Failed to send emails: ' + error.message, 'error');
+                showStatus(statusMessage, '✗ Failed to send emails', 'error');
             } finally {
                 sendAllBtn.disabled = false;
                 clearBtn.disabled = false;
@@ -263,17 +239,14 @@ if (document.getElementById('sendAllBtn')) {
         // Clear All
         clearBtn.addEventListener('click', function() {
             document.getElementById('senderName').value = '';
-            if (document.getElementById('gmailAccount')) document.getElementById('gmailAccount').value = '';
-            if (document.getElementById('appPassword')) document.getElementById('appPassword').value = '';
+            document.getElementById('gmailAccount').value = '';
+            document.getElementById('appPassword').value = '';
             document.getElementById('subject').value = '';
             document.getElementById('messageBody').value = '';
             recipientsTextarea.value = '';
             updateRecipientCount();
             resultsContainer.style.display = 'none';
-            showStatus(statusMessage, 'All fields cleared', 'success');
+            showStatus(statusMessage, 'Form cleared successfully', 'success');
         });
-        
-        // Initialize
-        updateRecipientCount();
     });
 }
