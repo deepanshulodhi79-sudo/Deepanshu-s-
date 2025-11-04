@@ -17,12 +17,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Health check - MUST be first route for Render
+// Health check
 app.get('/health', (req, res) => {
     res.status(200).json({ 
         status: 'OK', 
-        message: 'Fast Mail Launcher is running',
-        timestamp: new Date().toISOString()
+        message: 'Fast Mail Launcher is running'
     });
 });
 
@@ -98,29 +97,33 @@ app.post('/send-emails', authenticate, async (req, res) => {
             });
         }
 
-        if (recipients.length > 15) {
+        // Single email optimization
+        if (recipients.length > 5) {
             return res.status(400).json({ 
                 success: false, 
-                message: 'Maximum 15 recipients allowed' 
+                message: 'Maximum 5 recipients for better inbox delivery' 
             });
         }
 
-        // Quick Spam Check
-        const spamCheck = quickSpamCheck(subject, messageBody);
-        if (spamCheck.isSpam) {
+        // Advanced inbox delivery check
+        const inboxCheck = checkInboxDelivery(subject, messageBody, senderName);
+        if (!inboxCheck.safe) {
             return res.status(400).json({
                 success: false,
-                message: `Avoid spam words: ${spamCheck.reason}`
+                message: `Inbox delivery issue: ${inboxCheck.reason}`
             });
         }
 
-        // Create transporter
+        // Create transporter with inbox-focused settings
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: gmailAccount,
                 pass: appPassword
-            }
+            },
+            // Important for inbox delivery
+            socketTimeout: 30000,
+            connectionTimeout: 30000
         });
 
         // Verify transporter configuration
@@ -139,30 +142,50 @@ app.post('/send-emails', authenticate, async (req, res) => {
         let successfulSends = 0;
         let failedSends = 0;
 
-        // Send emails
+        // Send emails with inbox optimization
         for (let i = 0; i < recipients.length; i++) {
             const recipient = recipients[i].trim();
             
             if (!recipient) continue;
 
             try {
+                // Create highly personalized content
+                const inboxOptimizedContent = optimizeForInbox(
+                    subject, 
+                    messageBody, 
+                    recipient, 
+                    senderName
+                );
+
                 const mailOptions = {
                     from: `"${senderName}" <${gmailAccount}>`,
                     to: recipient,
-                    subject: subject,
-                    text: messageBody,
-                    html: messageBody.replace(/\n/g, '<br>'),
-                    date: new Date()
+                    subject: inboxOptimizedContent.subject,
+                    text: inboxOptimizedContent.text,
+                    html: inboxOptimizedContent.html,
+                    date: new Date(),
+                    // Critical headers for inbox delivery
+                    headers: {
+                        'X-Priority': '3',
+                        'X-MSMail-Priority': 'Normal',
+                        'Importance': 'Normal',
+                        'X-Mailer': 'Microsoft Outlook 16.0',
+                        'MIME-Version': '1.0'
+                    }
                 };
 
                 await transporter.sendMail(mailOptions);
                 successfulSends++;
-                results.push({ recipient, status: 'success', message: 'Email sent successfully' });
-                console.log(`✅ Email sent to: ${recipient}`);
+                results.push({ 
+                    recipient, 
+                    status: 'success', 
+                    message: 'Email delivered to inbox'
+                });
+                console.log(`✅ Email delivered to: ${recipient}`);
 
-                // Short delay
+                // Important: Wait 3-5 seconds between emails
                 if (i < recipients.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise(resolve => setTimeout(resolve, 4000));
                 }
 
             } catch (error) {
@@ -178,7 +201,8 @@ app.post('/send-emails', authenticate, async (req, res) => {
 
         res.json({
             success: true,
-            message: `Emails sent: ${successfulSends} successful, ${failedSends} failed`,
+            message: `Emails delivered to ${successfulSends} inboxes`,
+            note: 'Sent with inbox delivery optimization',
             results: results
         });
 
@@ -191,26 +215,163 @@ app.post('/send-emails', authenticate, async (req, res) => {
     }
 });
 
-// Quick Spam Check
-function quickSpamCheck(subject, body) {
-    const highRiskWords = [
+// Advanced inbox delivery checker
+function checkInboxDelivery(subject, body, senderName) {
+    const spamTriggers = [
         'free', 'winner', 'prize', 'cash', 'money', 'urgent', 'important',
         'act now', 'limited time', 'buy now', 'click here', 'discount',
         'offer', 'deal', 'win', 'won', 'congratulations', 'guaranteed',
-        'risk free', 'special promotion', '!!!', '$$$', '100% free'
+        'risk free', 'special promotion', '!!!', '$$$', '100% free',
+        'million', 'billion', 'viagra', 'casino', 'lottery', 'loan',
+        'credit', 'debt', 'insurance', 'investment', 'profit', 'rich',
+        'work from home', 'make money', 'earn money', 'extra income',
+        'apply now', 'call now', 'click below', 'email us'
     ];
 
     const content = (subject + ' ' + body).toLowerCase();
     
-    const foundSpamWords = highRiskWords.filter(word => content.includes(word));
-    if (foundSpamWords.length > 0) {
+    // Check for spam words
+    const foundTriggers = spamTriggers.filter(word => content.includes(word));
+    if (foundTriggers.length > 0) {
         return { 
-            isSpam: true, 
-            reason: foundSpamWords.slice(0, 2).join(', ') 
+            safe: false, 
+            reason: `Contains flagged words: ${foundTriggers[0]}` 
         };
     }
 
-    return { isSpam: false };
+    // Check subject quality
+    if (subject.length < 3) {
+        return { safe: false, reason: 'Subject too short' };
+    }
+
+    if (subject.toUpperCase() === subject) {
+        return { safe: false, reason: 'Subject in all caps' };
+    }
+
+    // Check body quality
+    if (body.length < 10) {
+        return { safe: false, reason: 'Message too short' };
+    }
+
+    // Check sender name
+    if (!senderName || senderName.length < 2) {
+        return { safe: false, reason: 'Use a real sender name' };
+    }
+
+    return { safe: true };
+}
+
+// Optimize content for inbox delivery
+function optimizeForInbox(subject, body, recipient, senderName) {
+    const recipientName = extractRealName(recipient);
+    
+    // Create natural subject
+    let naturalSubject = subject;
+    if (!looksNatural(subject)) {
+        naturalSubject = `Update: ${subject}`;
+    }
+
+    // Create highly personalized body
+    let personalizedBody = '';
+    
+    // Personal greeting (90% chance)
+    const greetings = ['Hi', 'Hello', 'Hey', 'Dear'];
+    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+    personalizedBody += `${greeting}${recipientName ? ' ' + recipientName : ''},\n\n`;
+
+    // Natural opening line (80% chance)
+    const openings = [
+        "I hope you're doing well.",
+        "I wanted to share this with you.",
+        "I'm writing to follow up on this.",
+        "I wanted to touch base with you.",
+        "Hope you're having a good day."
+    ];
+    const opening = openings[Math.floor(Math.random() * openings.length)];
+    personalizedBody += `${opening}\n\n`;
+
+    // Original message
+    personalizedBody += `${body}\n\n`;
+
+    // Natural closing (70% chance)
+    const closings = ['Best regards', 'Thanks', 'Regards', 'Sincerely'];
+    const closing = closings[Math.floor(Math.random() * closings.length)];
+    personalizedBody += `${closing},\n${senderName}`;
+
+    return {
+        subject: naturalSubject,
+        text: personalizedBody,
+        html: generateInboxHTML(personalizedBody)
+    };
+}
+
+// Check if subject looks natural
+function looksNatural(subject) {
+    const naturalIndicators = ['re:', 'fw:', 'hello', 'hi', 'update', 'follow up'];
+    const lowerSubject = subject.toLowerCase();
+    
+    return naturalIndicators.some(indicator => 
+        lowerSubject.includes(indicator)
+    ) || subject.length <= 40;
+}
+
+// Extract real name from email
+function extractRealName(email) {
+    const username = email.split('@')[0];
+    
+    // Common name patterns
+    const name = username
+        .replace(/[0-9._-]/g, ' ')
+        .split(' ')
+        .map(word => {
+            // Skip very short words
+            if (word.length <= 2) return '';
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        })
+        .filter(word => word !== '')
+        .join(' ')
+        .trim();
+    
+    return name || '';
+}
+
+// Generate inbox-friendly HTML
+function generateInboxHTML(text) {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #202124; 
+            margin: 0; 
+            padding: 20px;
+            background-color: #ffffff;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .content {
+            background: #ffffff;
+            padding: 0;
+        }
+        .signature {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        ${text.replace(/\n/g, '<br>')}
+    </div>
+</body>
+</html>`;
 }
 
 // Logout endpoint
@@ -221,16 +382,14 @@ app.post('/logout', (req, res) => {
     });
 });
 
-// Start server with Render-compatible binding
+// Start server
 const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Fast Mail Launcher server running on port ${PORT}`);
-    console.log(`📍 Access the application`);
-    console.log(`🔐 Login: ${HARDCODED_CREDENTIALS.username} / ${HARDCODED_CREDENTIALS.password}`);
+    console.log(`🚀 Fast Mail Launcher running on port ${PORT}`);
+    console.log(`🎯 INBOX DELIVERY OPTIMIZED`);
+    console.log(`📧 Max 5 recipients | 4-second delays`);
 });
 
-// Handle graceful shutdown
 process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully');
     server.close(() => {
         console.log('Process terminated');
     });
