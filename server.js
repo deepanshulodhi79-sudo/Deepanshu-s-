@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000; // Render provides PORT
 
 // Hardcoded login credentials
 const HARDCODED_CREDENTIALS = {
@@ -25,6 +25,15 @@ app.get('/', (req, res) => {
 // Serve launcher page
 app.get('/launcher', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'launcher.html'));
+});
+
+// Health check endpoint for Render
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        message: 'Fast Mail Launcher is running',
+        timestamp: new Date().toISOString()
+    });
 });
 
 // Login endpoint
@@ -89,14 +98,14 @@ app.post('/send-emails', authenticate, async (req, res) => {
             });
         }
 
-        if (recipients.length > 15) { // Increased to 15
+        if (recipients.length > 15) {
             return res.status(400).json({ 
                 success: false, 
                 message: 'Maximum 15 recipients allowed' 
             });
         }
 
-        // QUICK Spam Check
+        // Quick Spam Check
         const spamCheck = quickSpamCheck(subject, messageBody);
         if (spamCheck.isSpam) {
             return res.status(400).json({
@@ -105,14 +114,14 @@ app.post('/send-emails', authenticate, async (req, res) => {
             });
         }
 
-        // Create single transporter (FASTER)
+        // Create transporter
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: gmailAccount,
                 pass: appPassword
             },
-            pool: true, // Enable connection pooling
+            pool: true,
             maxConnections: 3,
             rateDelta: 1000,
             rateLimit: 5
@@ -175,14 +184,14 @@ app.post('/send-emails', authenticate, async (req, res) => {
 
             // VERY SHORT delay between batches (0.3-1 second)
             if (batch < totalBatches - 1) {
-                const shortDelay = Math.floor(Math.random() * 700) + 300; // 0.3-1 second
+                const shortDelay = Math.floor(Math.random() * 700) + 300;
                 await new Promise(resolve => setTimeout(resolve, shortDelay));
             }
         }
 
         res.json({
             success: true,
-            message: `Emails sent to ${successfulSends} recipients in ~${Math.ceil(recipients.length * 0.5)} seconds`,
+            message: `Emails sent to ${successfulSends} recipients`,
             results: results
         });
 
@@ -195,7 +204,7 @@ app.post('/send-emails', authenticate, async (req, res) => {
     }
 });
 
-// Send single email (FAST)
+// Send single email
 async function sendSingleEmail(transporter, emailData, index) {
     const { senderName, gmailAccount, subject, messageBody, recipient } = emailData;
     
@@ -204,13 +213,13 @@ async function sendSingleEmail(transporter, emailData, index) {
     }
 
     try {
-        // Simple personalization (NO delays)
+        // Simple personalization
         const personalBody = personalizeContent(messageBody, recipient);
 
         const mailOptions = {
             from: `"${senderName}" <${gmailAccount}>`,
             to: recipient,
-            subject: subject, // Keep original subject
+            subject: subject,
             text: personalBody,
             html: personalBody.replace(/\n/g, '<br>'),
             date: new Date()
@@ -251,12 +260,11 @@ function quickSpamCheck(subject, body) {
 function personalizeContent(body, recipient) {
     const name = extractName(recipient);
     
-    // Quick personalization (50% chance)
     if (Math.random() < 0.5 && name) {
         return `Hi ${name},\n\n${body}`;
     }
     
-    return body; // Return original if no personalization
+    return body;
 }
 
 // Extract name from email
@@ -279,19 +287,9 @@ app.post('/logout', (req, res) => {
     });
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        message: 'Fast Mail Launcher is running',
-        mode: 'FAST MODE - Minimal delays'
-    });
-});
-
-app.listen(PORT, () => {
+// Start server
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Fast Mail Launcher server running on port ${PORT}`);
     console.log(`📍 Access the application at: http://localhost:${PORT}`);
     console.log(`🔐 Login: ${HARDCODED_CREDENTIALS.username} / ${HARDCODED_CREDENTIALS.password}`);
-    console.log(`⚡ FAST MODE: 3 emails parallel, 0.3-1s delays`);
-    console.log(`📧 Max 15 recipients | Quick personalization`);
 });
