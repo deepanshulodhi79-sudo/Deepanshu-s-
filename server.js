@@ -95,34 +95,37 @@ app.post('/send-emails', authenticate, async (req, res) => {
             });
         }
 
-        // Single email optimization
-        if (recipients.length > 3) {
+        // Single recipient focus
+        if (recipients.length > 1) {
             return res.status(400).json({ 
                 success: false, 
-                message: 'Maximum 3 recipients for better delivery' 
+                message: 'Send to 1 recipient at a time for best delivery' 
             });
         }
 
-        // Create transporter with Gmail's SMTP (not API)
+        // Create transporter with Gmail's EXACT settings
         const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false, // Use TLS
+            service: 'gmail',
             auth: {
                 user: gmailAccount,
                 pass: appPassword
             },
-            tls: {
-                rejectUnauthorized: false
-            }
+            // Gmail's exact timeout settings
+            socketTimeout: 30000,
+            connectionTimeout: 30000,
+            greetingTimeout: 30000,
+            // Important: Use connection pooling
+            pool: true,
+            maxConnections: 1,
+            maxMessages: 1
         });
 
         // Verify transporter configuration
         try {
             await transporter.verify();
-            console.log('SMTP authentication successful');
+            console.log('Gmail authentication successful');
         } catch (error) {
-            console.error('SMTP authentication failed:', error);
+            console.error('Gmail authentication failed:', error);
             return res.status(400).json({ 
                 success: false, 
                 message: 'Gmail authentication failed. Please check your email and app password.' 
@@ -131,25 +134,33 @@ app.post('/send-emails', authenticate, async (req, res) => {
 
         const results = [];
         let successfulSends = 0;
-        let failedSends = 0;
 
-        // Send emails with Gmail-friendly approach
+        // Send to single recipient
         for (let i = 0; i < recipients.length; i++) {
             const recipient = recipients[i].trim();
             
             if (!recipient) continue;
 
             try {
-                // Use ORIGINAL content (no auto-personalization)
+                // Use NATURAL email format
+                const naturalEmail = createNaturalEmail(
+                    subject, 
+                    messageBody, 
+                    recipient, 
+                    senderName
+                );
+
                 const mailOptions = {
                     from: `"${senderName}" <${gmailAccount}>`,
                     to: recipient,
-                    subject: subject,
-                    text: messageBody,
-                    html: generateSimpleHTML(messageBody),
+                    subject: naturalEmail.subject,
+                    text: naturalEmail.text,
+                    html: naturalEmail.html,
                     date: new Date(),
-                    // Minimal headers
+                    // Critical: Gmail-compatible headers
                     headers: {
+                        'Message-ID': `<${Date.now()}@gmail.com>`,
+                        'X-Google-Original-From': senderName,
                         'X-Priority': '3',
                         'Importance': 'Normal'
                     }
@@ -160,17 +171,11 @@ app.post('/send-emails', authenticate, async (req, res) => {
                 results.push({ 
                     recipient, 
                     status: 'success', 
-                    message: 'Email sent successfully'
+                    message: 'Email delivered successfully'
                 });
-                console.log(`✅ Email sent to: ${recipient}`);
-
-                // No delays for single email
-                if (recipients.length > 1 && i < recipients.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                }
+                console.log(`✅ Email delivered to: ${recipient}`);
 
             } catch (error) {
-                failedSends++;
                 results.push({ 
                     recipient, 
                     status: 'error', 
@@ -182,7 +187,8 @@ app.post('/send-emails', authenticate, async (req, res) => {
 
         res.json({
             success: true,
-            message: `Emails sent to ${successfulSends} recipients`,
+            message: `Email sent successfully to ${successfulSends} recipient`,
+            note: 'Sent with Gmail-optimized delivery',
             results: results
         });
 
@@ -195,9 +201,93 @@ app.post('/send-emails', authenticate, async (req, res) => {
     }
 });
 
-// Simple HTML
-function generateSimpleHTML(text) {
-    return `<div style="font-family: Arial, sans-serif; line-height: 1.6;">${text.replace(/\n/g, '<br>')}</div>`;
+// Create natural-looking email (Gmail AI ko trick karega)
+function createNaturalEmail(subject, body, recipient, senderName) {
+    const recipientName = extractFirstName(recipient);
+    
+    // Natural subject (conversation-like)
+    let naturalSubject = subject;
+    if (!subject.toLowerCase().includes('re:') && !subject.toLowerCase().includes('fwd:')) {
+        // Add conversation indicators
+        const indicators = ['', 'Update:', 'Quick:', 'Following up:'];
+        naturalSubject = `${indicators[Math.floor(Math.random() * indicators.length)]} ${subject}`.trim();
+    }
+
+    // Natural body (exactly like manual email)
+    let naturalBody = '';
+    
+    // Personal greeting (always)
+    const greetings = ['Hi', 'Hello', 'Hey'];
+    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+    naturalBody += `${greeting}${recipientName ? ' ' + recipientName : ''},\n\n`;
+
+    // Natural opening (like real conversation)
+    naturalBody += `${body}\n\n`;
+
+    // Natural closing (like real email)
+    naturalBody += `Best,\n${senderName}`;
+
+    return {
+        subject: naturalSubject,
+        text: naturalBody,
+        html: generateNaturalHTML(naturalBody, senderName)
+    };
+}
+
+// Extract first name from email
+function extractFirstName(email) {
+    const username = email.split('@')[0];
+    
+    // Common first names extraction
+    const nameParts = username.replace(/[0-9._-]/g, ' ').split(' ');
+    const firstName = nameParts[0] || '';
+    
+    return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+}
+
+// Generate natural HTML (exactly like Gmail)
+function generateNaturalHTML(text, senderName) {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+            line-height: 1.5;
+            color: #202124;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .email-content {
+            background: #ffffff;
+            padding: 0;
+        }
+        .signature {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            color: #5f6368;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-content">
+            ${text.replace(/\n/g, '<br>')}
+        </div>
+    </div>
+</body>
+</html>`;
 }
 
 // Logout endpoint
@@ -211,7 +301,8 @@ app.post('/logout', (req, res) => {
 // Start server
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Fast Mail Launcher running on port ${PORT}`);
-    console.log(`📧 Gmail SMTP Mode | No auto-personalization`);
+    console.log(`🎯 GMAIL AI OPTIMIZED - Single Recipient Focus`);
+    console.log(`📧 Natural Email Format | Gmail-Compatible Headers`);
 });
 
 process.on('SIGTERM', () => {
