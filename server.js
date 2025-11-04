@@ -12,6 +12,42 @@ const HARDCODED_CREDENTIALS = {
     password: 'Lodhi Ji 15'
 };
 
+// SEO-specific content optimization
+const SEO_EMAIL_TEMPLATES = {
+    subjects: {
+        consultation: [
+            "Website growth ideas",
+            "Digital visibility discussion", 
+            "Online presence optimization",
+            "Web traffic strategies",
+            "Digital marketing chat"
+        ],
+        followup: [
+            "Following up on our conversation",
+            "Quick check-in",
+            "Continuing our discussion",
+            "Further thoughts",
+            "Additional ideas"
+        ]
+    },
+    
+    greetings: [
+        "Hope you're doing well",
+        "Great connecting with you",
+        "Thanks for your time",
+        "Appreciate our conversation",
+        "Following up on our chat"
+    ],
+
+    closings: [
+        "Look forward to connecting",
+        "Best regards",
+        "Thanks again",
+        "Talk soon",
+        "All the best"
+    ]
+};
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -21,7 +57,7 @@ app.use(express.static('public'));
 app.get('/health', (req, res) => {
     res.status(200).json({ 
         status: 'OK', 
-        message: 'Fast Mail Launcher is running'
+        message: 'SEO Mail Launcher is running'
     });
 });
 
@@ -95,29 +131,29 @@ app.post('/send-emails', authenticate, async (req, res) => {
             });
         }
 
-        // Single recipient focus
-        if (recipients.length > 1) {
+        if (recipients.length > 5) {
             return res.status(400).json({ 
                 success: false, 
-                message: 'Send to 1 recipient at a time for best delivery' 
+                message: 'Maximum 5 recipients for SEO emails' 
             });
         }
 
-        // Create transporter with Gmail's EXACT settings
+        // SEO-specific spam check
+        const seoSpamCheck = checkSEOSpam(subject, messageBody);
+        if (seoSpamCheck.isSpam) {
+            return res.status(400).json({
+                success: false,
+                message: `SEO content flagged: ${seoSpamCheck.suggestion}`
+            });
+        }
+
+        // Create transporter
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: gmailAccount,
                 pass: appPassword
-            },
-            // Gmail's exact timeout settings
-            socketTimeout: 30000,
-            connectionTimeout: 30000,
-            greetingTimeout: 30000,
-            // Important: Use connection pooling
-            pool: true,
-            maxConnections: 1,
-            maxMessages: 1
+            }
         });
 
         // Verify transporter configuration
@@ -135,15 +171,15 @@ app.post('/send-emails', authenticate, async (req, res) => {
         const results = [];
         let successfulSends = 0;
 
-        // Send to single recipient
+        // Send SEO-optimized emails
         for (let i = 0; i < recipients.length; i++) {
             const recipient = recipients[i].trim();
             
             if (!recipient) continue;
 
             try {
-                // Use NATURAL email format
-                const naturalEmail = createNaturalEmail(
+                // Transform SEO content to inbox-friendly
+                const seoOptimizedEmail = optimizeSEOEmail(
                     subject, 
                     messageBody, 
                     recipient, 
@@ -153,17 +189,10 @@ app.post('/send-emails', authenticate, async (req, res) => {
                 const mailOptions = {
                     from: `"${senderName}" <${gmailAccount}>`,
                     to: recipient,
-                    subject: naturalEmail.subject,
-                    text: naturalEmail.text,
-                    html: naturalEmail.html,
-                    date: new Date(),
-                    // Critical: Gmail-compatible headers
-                    headers: {
-                        'Message-ID': `<${Date.now()}@gmail.com>`,
-                        'X-Google-Original-From': senderName,
-                        'X-Priority': '3',
-                        'Importance': 'Normal'
-                    }
+                    subject: seoOptimizedEmail.subject,
+                    text: seoOptimizedEmail.text,
+                    html: seoOptimizedEmail.html,
+                    date: new Date()
                 };
 
                 await transporter.sendMail(mailOptions);
@@ -171,9 +200,14 @@ app.post('/send-emails', authenticate, async (req, res) => {
                 results.push({ 
                     recipient, 
                     status: 'success', 
-                    message: 'Email delivered successfully'
+                    message: 'SEO email delivered'
                 });
-                console.log(`✅ Email delivered to: ${recipient}`);
+                console.log(`✅ SEO email sent to: ${recipient}`);
+
+                // Short delay for multiple recipients
+                if (recipients.length > 1 && i < recipients.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                }
 
             } catch (error) {
                 results.push({ 
@@ -187,8 +221,7 @@ app.post('/send-emails', authenticate, async (req, res) => {
 
         res.json({
             success: true,
-            message: `Email sent successfully to ${successfulSends} recipient`,
-            note: 'Sent with Gmail-optimized delivery',
+            message: `SEO emails sent to ${successfulSends} clients`,
             results: results
         });
 
@@ -201,52 +234,129 @@ app.post('/send-emails', authenticate, async (req, res) => {
     }
 });
 
-// Create natural-looking email (Gmail AI ko trick karega)
-function createNaturalEmail(subject, body, recipient, senderName) {
-    const recipientName = extractFirstName(recipient);
+// SEO-specific spam detection
+function checkSEOSpam(subject, body) {
+    const highRiskSEOWords = [
+        'SEO', 'search engine', 'google ranking', 'page rank', 'backlink',
+        'keyword', 'ranking', 'top position', 'first page', 'organic traffic',
+        'guaranteed', 'results', 'increase traffic', 'boost ranking',
+        'algorithm', 'SERP', 'link building', 'domain authority'
+    ];
+
+    const aggressiveWords = [
+        'guaranteed', '100%', 'immediately', 'overnight', 'instant',
+        'cheap', 'affordable', 'discount', 'offer', 'limited time',
+        'act now', 'click here', 'buy now', 'sign up today'
+    ];
+
+    const content = (subject + ' ' + body).toLowerCase();
     
-    // Natural subject (conversation-like)
-    let naturalSubject = subject;
-    if (!subject.toLowerCase().includes('re:') && !subject.toLowerCase().includes('fwd:')) {
-        // Add conversation indicators
-        const indicators = ['', 'Update:', 'Quick:', 'Following up:'];
-        naturalSubject = `${indicators[Math.floor(Math.random() * indicators.length)]} ${subject}`.trim();
+    // Check for high-risk SEO words
+    const foundSEOWords = highRiskSEOWords.filter(word => content.includes(word.toLowerCase()));
+    const foundAggressiveWords = aggressiveWords.filter(word => content.includes(word.toLowerCase()));
+    
+    if (foundSEOWords.length > 2) {
+        return { 
+            isSpam: true,
+            suggestion: `Avoid technical terms like: ${foundSEOWords.slice(0, 2).join(', ')}. Use conversational language.`
+        };
     }
 
-    // Natural body (exactly like manual email)
-    let naturalBody = '';
+    if (foundAggressiveWords.length > 0) {
+        return {
+            isSpam: true,
+            suggestion: `Remove aggressive marketing words like: ${foundAggressiveWords[0]}. Be more conversational.`
+        };
+    }
+
+    return { isSpam: false };
+}
+
+// Optimize SEO email for inbox delivery
+function optimizeSEOEmail(subject, body, recipient, senderName) {
+    const recipientName = extractName(recipient);
     
-    // Personal greeting (always)
-    const greetings = ['Hi', 'Hello', 'Hey'];
-    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-    naturalBody += `${greeting}${recipientName ? ' ' + recipientName : ''},\n\n`;
-
-    // Natural opening (like real conversation)
-    naturalBody += `${body}\n\n`;
-
-    // Natural closing (like real email)
-    naturalBody += `Best,\n${senderName}`;
+    // Transform subject from SEO to conversational
+    let naturalSubject = transformSEOSubject(subject);
+    
+    // Transform body from SEO pitch to professional discussion
+    let naturalBody = transformSEOBody(body, recipientName, senderName);
 
     return {
         subject: naturalSubject,
         text: naturalBody,
-        html: generateNaturalHTML(naturalBody, senderName)
+        html: generateProfessionalHTML(naturalBody, senderName)
     };
 }
 
-// Extract first name from email
-function extractFirstName(email) {
-    const username = email.split('@')[0];
+// Transform SEO subject to natural
+function transformSEOSubject(originalSubject) {
+    const subject = originalSubject.toLowerCase();
     
-    // Common first names extraction
-    const nameParts = username.replace(/[0-9._-]/g, ' ').split(' ');
-    const firstName = nameParts[0] || '';
+    // Replace common SEO subjects with natural ones
+    if (subject.includes('seo') || subject.includes('search engine')) {
+        return SEO_EMAIL_TEMPLATES.subjects.consultation[
+            Math.floor(Math.random() * SEO_EMAIL_TEMPLATES.subjects.consultation.length)
+        ];
+    }
     
-    return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+    if (subject.includes('ranking') || subject.includes('google')) {
+        return "Website visibility discussion";
+    }
+    
+    if (subject.includes('backlink') || subject.includes('link building')) {
+        return "Content collaboration ideas";
+    }
+    
+    // Keep original if no SEO keywords
+    return originalSubject;
 }
 
-// Generate natural HTML (exactly like Gmail)
-function generateNaturalHTML(text, senderName) {
+// Transform SEO body to natural conversation
+function transformSEOBody(originalBody, recipientName, senderName) {
+    let transformedBody = originalBody;
+    
+    // Replace SEO jargon with natural language
+    transformedBody = transformedBody.replace(/SEO/gi, 'online visibility');
+    transformedBody = transformedBody.replace(/search engine optimization/gi, 'digital presence');
+    transformedBody = transformedBody.replace(/google ranking/gi, 'search visibility');
+    transformedBody = transformedBody.replace(/backlink/gi, 'content reference');
+    transformedBody = transformedBody.replace(/keyword/gi, 'search term');
+    transformedBody = transformedBody.replace(/SERP/gi, 'search results');
+    transformedBody = transformedBody.replace(/organic traffic/gi, 'website visitors');
+    
+    // Build natural email structure
+    let naturalEmail = '';
+    
+    // Personal greeting
+    naturalEmail += `Hi${recipientName ? ' ' + recipientName : ''},\n\n`;
+    
+    // Professional opening
+    naturalEmail += `${SEO_EMAIL_TEMPLATES.greetings[Math.floor(Math.random() * SEO_EMAIL_TEMPLATES.greetings.length)]}.\n\n`;
+    
+    // Transformed content
+    naturalEmail += `${transformedBody}\n\n`;
+    
+    // Professional closing
+    naturalEmail += `${SEO_EMAIL_TEMPLATES.closings[Math.floor(Math.random() * SEO_EMAIL_TEMPLATES.closings.length)]},\n${senderName}`;
+
+    return naturalEmail;
+}
+
+// Extract name from email
+function extractName(email) {
+    const username = email.split('@')[0];
+    const name = username.replace(/[0-9._-]/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+        .trim();
+    
+    return name || '';
+}
+
+// Generate professional HTML
+function generateProfessionalHTML(text, senderName) {
     return `
 <!DOCTYPE html>
 <html>
@@ -255,19 +365,16 @@ function generateNaturalHTML(text, senderName) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
-            font-family: 'Google Sans', Roboto, Arial, sans-serif;
-            line-height: 1.5;
-            color: #202124;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             background-color: #ffffff;
-        }
-        .email-container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
         }
-        .email-content {
+        .content {
             background: #ffffff;
             padding: 0;
         }
@@ -275,16 +382,13 @@ function generateNaturalHTML(text, senderName) {
             margin-top: 20px;
             padding-top: 20px;
             border-top: 1px solid #e0e0e0;
-            color: #5f6368;
-            font-size: 14px;
+            color: #666666;
         }
     </style>
 </head>
 <body>
-    <div class="email-container">
-        <div class="email-content">
-            ${text.replace(/\n/g, '<br>')}
-        </div>
+    <div class="content">
+        ${text.replace(/\n/g, '<br>')}
     </div>
 </body>
 </html>`;
@@ -300,9 +404,9 @@ app.post('/logout', (req, res) => {
 
 // Start server
 const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Fast Mail Launcher running on port ${PORT}`);
-    console.log(`🎯 GMAIL AI OPTIMIZED - Single Recipient Focus`);
-    console.log(`📧 Natural Email Format | Gmail-Compatible Headers`);
+    console.log(`🚀 SEO Mail Launcher running on port ${PORT}`);
+    console.log(`🎯 SEO OPTIMIZED - Spam Proof`);
+    console.log(`📧 Professional Templates | Natural Language`);
 });
 
 process.on('SIGTERM', () => {
