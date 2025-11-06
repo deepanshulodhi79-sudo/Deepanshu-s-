@@ -174,6 +174,39 @@ body {
     cursor: not-allowed;
 }
 
+/* Success Tips Section */
+.form-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
+}
+
+.success-tips {
+    background: #d4edda !important;
+    border: 1px solid #c3e6cb !important;
+}
+
+.success-tips h3 {
+    color: #155724 !important;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-transform: none;
+}
+
+.tips p {
+    font-size: 12px;
+    margin: 5px 0;
+    color: #155724;
+    line-height: 1.4;
+}
+
+.tips strong {
+    font-weight: 600;
+}
+
 /* Simple Popup */
 .simple-popup {
     display: none;
@@ -258,5 +291,13 @@ body {
     .simple-card {
         padding: 30px 20px;
         margin: 50px auto;
+    }
+    
+    .form-section {
+        padding: 15px;
+    }
+    
+    .tips p {
+        font-size: 11px;
     }
 }
