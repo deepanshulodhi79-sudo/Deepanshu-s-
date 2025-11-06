@@ -1,11 +1,85 @@
-<!-- Add this section in your launcher.html -->
-<div class="form-section success-tips">
-    <h3>✅ Inbox Delivery Tips</h3>
-    <div class="tips">
-        <p>• Use your <strong>real name</strong> as sender</p>
-        <p>• Write <strong>natural, conversational</strong> content</p>
-        <p>• Avoid words like "free", "guaranteed", "winner"</p>
-        <p>• Don't use ALL CAPS in subject</p>
-        <p>• Start with 1-2 test emails</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast Mail Launcher</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="simple-container">
+        <div class="simple-header">
+            <h1>Fast Mail Launcher</h1>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+
+        <div class="simple-grid">
+            <!-- Left Column -->
+            <div class="left-column">
+                <div class="input-group">
+                    <label>Sender Name</label>
+                    <input type="text" id="senderName" placeholder="Enter your real name">
+                </div>
+
+                <div class="input-group">
+                    <label>Your Email</label>
+                    <input type="email" id="gmailAccount" placeholder="your.email@gmail.com">
+                </div>
+
+                <div class="input-group">
+                    <label>App Password</label>
+                    <input type="password" id="appPassword" placeholder="Enter app password">
+                </div>
+
+                <div class="input-group">
+                    <label>Subject</label>
+                    <input type="text" id="subject" placeholder="Email subject">
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="right-column">
+                <div class="input-group">
+                    <label>Message Body</label>
+                    <textarea id="messageBody" placeholder="Type your message here..." rows="6"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label>Recipients (comma or newline)</label>
+                    <textarea id="recipients" placeholder="Enter email addresses" rows="4"></textarea>
+                    <div class="counter">Recipients: <span id="recipientCount">0</span>/30</div>
+                </div>
+
+                <!-- Success Tips Section -->
+                <div class="form-section success-tips">
+                    <h3>✅ Inbox Delivery Tips</h3>
+                    <div class="tips">
+                        <p>• Use your <strong>real name</strong> as sender</p>
+                        <p>• Write <strong>natural, conversational</strong> content</p>
+                        <p>• Avoid words like "free", "guaranteed", "winner"</p>
+                        <p>• Don't use ALL CAPS in subject</p>
+                        <p>• Start with 1-2 test emails first</p>
+                        <p>• Use old Gmail accounts (2012-2015 best)</p>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="sendAllBtn" class="send-btn">Send All</button>
+                    <div id="statusMessage" class="status"></div>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+
+    <!-- Simple Popup -->
+    <div id="successPopup" class="simple-popup">
+        <div class="popup-content">
+            <h3>Success!</h3>
+            <p id="popupMessage">Emails sent successfully!</p>
+            <button id="closePopup" class="popup-btn">OK</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
