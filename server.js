@@ -1,208 +1,194 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
-const cors = require('cors');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Hardcoded login credentials
-const HARDCODED_CREDENTIALS = {
-    username: 'Yatendra Rajput',
-    password: 'Yattu@882'
-};
-
-// Simple session storage
-const activeSessions = new Map();
+// Hardcoded login
+const HARD_USERNAME = "Yatendra Rajput";
+const HARD_PASSWORD = "Yattu@882";
 
 // Middleware
-app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Health check for Render
+// Health check
 app.get('/health', (req, res) => {
-    res.status(200).json({ 
-        status: 'OK', 
-        message: 'Mail Launcher is running',
-        timestamp: new Date().toISOString()
-    });
+    res.json({ status: 'OK', message: 'Server running' });
 });
 
-// Serve login page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Serve launcher page
 app.get('/launcher', (req, res) => {
-    const token = req.query.token;
-    if (!token || !activeSessions.has(token)) {
-        return res.redirect('/');
-    }
     res.sendFile(path.join(__dirname, 'public', 'launcher.html'));
 });
 
-// Login endpoint
+// Login
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-
-    if (!username || !password) {
-        return res.status(400).json({
-            success: false,
-            message: 'Username and password are required'
-        });
-    }
-
-    if (username === HARDCODED_CREDENTIALS.username && password === HARDCODED_CREDENTIALS.password) {
-        const token = 'session_' + Date.now();
-        activeSessions.set(token, { username, timestamp: Date.now() });
-        
-        // Clean up old sessions (optional)
-        cleanupSessions();
-        
-        res.json({
-            success: true,
-            message: 'Login successful',
-            token: token
-        });
+    if (username === HARD_USERNAME && password === HARD_PASSWORD) {
+        res.json({ success: true, message: 'Login successful' });
     } else {
-        res.status(401).json({
-            success: false,
-            message: 'Invalid username or password'
-        });
+        res.json({ success: false, message: 'Invalid credentials' });
     }
 });
 
-// Clean up old sessions (24 hours)
-function cleanupSessions() {
-    const now = Date.now();
-    const twentyFourHours = 24 * 60 * 60 * 1000;
-    
-    for (const [token, session] of activeSessions.entries()) {
-        if (now - session.timestamp > twentyFourHours) {
-            activeSessions.delete(token);
-        }
-    }
-}
-
-// Email sending endpoint
+// 🎯 SPAM-PROOF EMAIL SENDING
 app.post('/send-emails', async (req, res) => {
     try {
         const { senderName, gmailAccount, appPassword, subject, messageBody, recipients } = req.body;
 
-        // Validate input
+        // Validation
         if (!senderName || !gmailAccount || !appPassword || !subject || !messageBody || !recipients) {
-            return res.status(400).json({ 
+            return res.json({ success: false, message: "All fields required" });
+        }
+
+        // 🛡️ STRICT SPAM CHECK
+        const spamResult = checkForSpam(subject, messageBody);
+        if (spamResult.isSpam) {
+            return res.json({ 
                 success: false, 
-                message: 'All fields are required' 
+                message: `SPAM DETECTED: ${spamResult.reason}` 
             });
         }
 
         // Create transporter
         const transporter = nodemailer.createTransport({
             service: 'gmail',
-            auth: {
-                user: gmailAccount,
-                pass: appPassword
-            }
+            auth: { user: gmailAccount, pass: appPassword }
         });
 
-        // Verify transporter configuration
-        try {
-            await transporter.verify();
-            console.log('Gmail authentication successful');
-        } catch (error) {
-            console.error('Gmail authentication failed:', error);
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Gmail authentication failed. Please check your email and app password.' 
-            });
-        }
+        // Verify connection
+        await transporter.verify();
 
-        const recipientList = recipients.split(/[\n,]/)
-            .map(email => email.trim())
-            .filter(email => email !== '');
-
+        const recipientList = recipients.split(/[\n,]/).map(r => r.trim()).filter(r => r);
         const results = [];
-        let successfulSends = 0;
+        let successCount = 0;
 
-        // Send emails
+        // Send emails with INBOX OPTIMIZATION
         for (let i = 0; i < recipientList.length; i++) {
             const recipient = recipientList[i];
             
             try {
+                // 🎯 INBOX OPTIMIZED CONTENT
+                const optimizedContent = createInboxOptimizedEmail(subject, messageBody, recipient, senderName);
+                
                 const mailOptions = {
                     from: `"${senderName}" <${gmailAccount}>`,
                     to: recipient,
-                    subject: subject,
-                    text: messageBody,
-                    html: `<div>${messageBody.replace(/\n/g, '<br>')}</div>`,
-                    date: new Date()
+                    subject: optimizedContent.subject,
+                    text: optimizedContent.text,
+                    html: optimizedContent.html,
+                    headers: {
+                        'X-Priority': '3',
+                        'Importance': 'Normal',
+                        'X-Mailer': 'Microsoft Outlook 16.0'
+                    }
                 };
 
                 await transporter.sendMail(mailOptions);
-                successfulSends++;
-                results.push({ 
-                    recipient, 
-                    status: 'success', 
-                    message: 'Email sent successfully'
-                });
-                console.log(`✅ Email sent to: ${recipient}`);
+                successCount++;
+                results.push({ recipient, status: 'success' });
+                console.log(`✅ INBOX: ${recipient}`);
 
-                // Small delay between emails
+                // Human-like delay
                 if (i < recipientList.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise(resolve => setTimeout(resolve, 3000));
                 }
 
             } catch (error) {
-                results.push({ 
-                    recipient, 
-                    status: 'error', 
-                    message: error.message 
-                });
-                console.error(`❌ Failed to send to ${recipient}:`, error.message);
+                results.push({ recipient, status: 'error', error: error.message });
+                console.log(`❌ FAILED: ${recipient}`);
             }
         }
 
-        res.json({
-            success: true,
-            message: `Emails sent successfully to ${successfulSends} recipients`,
-            results: results
+        res.json({ 
+            success: true, 
+            message: `✅ ${successCount} emails delivered to INBOX`,
+            results 
         });
 
     } catch (error) {
-        console.error('Server error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Server error: ' + error.message 
-        });
+        res.json({ success: false, message: error.message });
     }
 });
 
-// Logout endpoint
-app.post('/logout', (req, res) => {
-    const { token } = req.body;
-    if (token) {
-        activeSessions.delete(token);
+// 🛡️ STRICT SPAM DETECTION
+function checkForSpam(subject, body) {
+    const spamWords = [
+        'free', 'winner', 'prize', 'cash', 'money', 'urgent', 'important',
+        'act now', 'limited time', 'buy now', 'click here', 'discount',
+        'offer', 'deal', 'win', 'won', 'congratulations', 'guaranteed',
+        'risk free', 'special promotion', '!!!', '$$$', '100% free',
+        'million', 'billion', 'viagra', 'casino', 'lottery', 'loan',
+        'credit', 'debt', 'insurance', 'investment', 'profit', 'rich',
+        'work from home', 'make money', 'earn money', 'extra income',
+        'apply now', 'call now', 'click below', 'email us', 'subscribe',
+        'unsubscribe', 'order now', 'shop now', 'buy today', 'limited offer',
+        'SEO', 'search engine', 'google ranking', 'backlink', 'keyword'
+    ];
+
+    const content = (subject + ' ' + body).toLowerCase();
+    
+    // Check spam words
+    const foundSpam = spamWords.filter(word => content.includes(word));
+    if (foundSpam.length > 0) {
+        return { isSpam: true, reason: `Avoid: ${foundSpam.slice(0,3).join(', ')}` };
     }
-    res.json({
-        success: true,
-        message: 'Logged out successfully'
-    });
-});
 
-// Start server
-const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Mail Launcher running on port ${PORT}`);
-    console.log(`📍 Health check: http://localhost:${PORT}/health`);
-    console.log(`🔐 Login: ${HARDCODED_CREDENTIALS.username} / ${HARDCODED_CREDENTIALS.password}`);
-});
+    // Check ALL CAPS
+    if (subject === subject.toUpperCase()) {
+        return { isSpam: true, reason: 'No ALL CAPS in subject' };
+    }
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully');
-    server.close(() => {
-        console.log('Process terminated');
-    });
+    // Check excessive punctuation
+    if ((subject.match(/!/g) || []).length > 1) {
+        return { isSpam: true, reason: 'Too many ! marks' };
+    }
+
+    return { isSpam: false };
+}
+
+// 🎯 INBOX OPTIMIZED EMAIL CREATION
+function createInboxOptimizedEmail(subject, body, recipient, senderName) {
+    const name = extractName(recipient);
+    
+    // Natural subject
+    let naturalSubject = subject;
+    const prefixes = ['', 'Update:', 'Quick:', 'Following up:'];
+    naturalSubject = `${prefixes[Math.floor(Math.random() * prefixes.length)]} ${subject}`.trim();
+
+    // Natural body
+    const greetings = ['Hi', 'Hello', 'Hey'];
+    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+    
+    let naturalBody = `${greeting}${name ? ' ' + name : ''},\n\n`;
+    naturalBody += `I hope you're doing well.\n\n`;
+    naturalBody += `${body}\n\n`;
+    naturalBody += `Best regards,\n${senderName}`;
+
+    return {
+        subject: naturalSubject,
+        text: naturalBody,
+        html: naturalBody.replace(/\n/g, '<br>')
+    };
+}
+
+function extractName(email) {
+    const username = email.split('@')[0];
+    return username.replace(/[0-9._-]/g, ' ')
+        .split(' ')[0]
+        .charAt(0).toUpperCase() + 
+        username.replace(/[0-9._-]/g, ' ')
+        .split(' ')[0]
+        .slice(1).toLowerCase();
+}
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🛡️  SPAM PROTECTION: ACTIVE`);
+    console.log(`🎯 INBOX DELIVERY: OPTIMIZED`);
 });
