@@ -82,7 +82,7 @@ const authenticate = (req, res, next) => {
     }
 };
 
-// Email sending endpoint - ULTIMATE SOLUTION
+// Email sending endpoint - WORKING GMAIL SMTP
 app.post('/send-emails', authenticate, async (req, res) => {
     try {
         const { senderName, gmailAccount, appPassword, subject, messageBody, recipients } = req.body;
@@ -95,30 +95,24 @@ app.post('/send-emails', authenticate, async (req, res) => {
             });
         }
 
-        // Use Outlook SMTP instead of Gmail
+        // Use Gmail SMTP with proper configuration
         const transporter = nodemailer.createTransport({
-            host: 'smtp-mail.outlook.com', // Outlook SMTP
-            port: 587,
-            secure: false, // Use TLS
+            service: 'gmail',
             auth: {
-                user: gmailAccount, // Your Gmail still works
+                user: gmailAccount,
                 pass: appPassword
-            },
-            tls: {
-                ciphers: 'SSLv3'
             }
         });
 
         // Verify transporter
         try {
             await transporter.verify();
-            console.log('Outlook SMTP authentication successful');
+            console.log('Gmail authentication successful');
         } catch (error) {
-            console.error('SMTP authentication failed:', error);
-            // Try Gmail as fallback
+            console.error('Gmail authentication failed:', error);
             return res.status(400).json({ 
                 success: false, 
-                message: 'Authentication failed. Please check your credentials.' 
+                message: 'Gmail authentication failed. Please check: 1) App password is correct 2) 2FA is enabled 3) App password is generated properly' 
             });
         }
 
@@ -137,12 +131,8 @@ app.post('/send-emails', authenticate, async (req, res) => {
                     to: recipient,
                     subject: subject,
                     text: messageBody,
-                    html: messageBody.replace(/\n/g, '<br>'),
-                    date: new Date(),
-                    headers: {
-                        'X-Mailer': 'Microsoft Outlook 16.0',
-                        'Content-Type': 'text/html; charset=utf-8'
-                    }
+                    html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;">${messageBody.replace(/\n/g, '<br>')}</div>`,
+                    date: new Date()
                 };
 
                 await transporter.sendMail(mailOptions);
@@ -150,7 +140,7 @@ app.post('/send-emails', authenticate, async (req, res) => {
                 results.push({ 
                     recipient, 
                     status: 'success', 
-                    message: 'Email delivered successfully'
+                    message: 'Email sent successfully'
                 });
                 console.log(`✅ Email sent to: ${recipient}`);
 
@@ -166,7 +156,7 @@ app.post('/send-emails', authenticate, async (req, res) => {
 
         res.json({
             success: true,
-            message: `Emails sent to ${successfulSends} recipients via Outlook SMTP`,
+            message: `✅ ${successfulSends} emails sent successfully`,
             results: results
         });
 
@@ -190,8 +180,8 @@ app.post('/logout', (req, res) => {
 // Start server
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Mail Launcher running on port ${PORT}`);
-    console.log(`📧 USING OUTLOOK SMTP - Better Delivery`);
-    console.log(`🔧 No spam filters | Fast delivery`);
+    console.log(`📧 GMAIL SMTP - Ready to send emails`);
+    console.log(`🔑 Make sure to use App Passwords`);
 });
 
 process.on('SIGTERM', () => {
