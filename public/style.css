@@ -6,7 +6,7 @@
 }
 
 body {
-    background: #f0f8ff;
+    background: #f8f9fa;
     min-height: 100vh;
     padding: 20px;
     color: #333;
@@ -30,7 +30,7 @@ body {
 
 .simple-header h1 {
     font-size: 28px;
-    color: #2c5aa0;
+    color: #d93025;
     font-weight: 700;
 }
 
@@ -42,7 +42,6 @@ body {
     border-radius: 6px;
     font-size: 14px;
     cursor: pointer;
-    transition: background 0.3s;
 }
 
 .logout-btn:hover {
@@ -70,7 +69,7 @@ body {
 .input-group label {
     font-size: 14px;
     font-weight: 600;
-    color: #2c5aa0;
+    color: #d93025;
 }
 
 .input-group input, .input-group textarea {
@@ -80,13 +79,11 @@ body {
     font-size: 14px;
     width: 100%;
     resize: vertical;
-    transition: border-color 0.3s;
 }
 
 .input-group input:focus, .input-group textarea:focus {
     outline: none;
-    border-color: #2c5aa0;
-    box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+    border-color: #d93025;
 }
 
 .input-group textarea {
@@ -99,6 +96,21 @@ body {
     color: #666;
     text-align: right;
     font-weight: 500;
+}
+
+.help-text {
+    margin-top: 5px;
+}
+
+.help-text a {
+    color: #1a73e8;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.help-text a:hover {
+    text-decoration: underline;
 }
 
 .action-buttons {
@@ -116,21 +128,18 @@ body {
     font-size: 16px;
     cursor: pointer;
     font-weight: 600;
-    transition: background 0.3s;
 }
 
 .send-btn:hover {
     background: #218838;
-    transform: translateY(-1px);
 }
 
 .send-btn:disabled {
     background: #6c757d;
     cursor: not-allowed;
-    transform: none;
 }
 
-/* Working Tips Section */
+/* Password Guide Section */
 .form-section {
     background: white;
     padding: 25px;
@@ -139,32 +148,29 @@ body {
     border: 2px solid #e1e5e9;
 }
 
-.working-tips {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    border: none !important;
-    color: white;
+.password-guide {
+    background: #fff3cd !important;
+    border: 2px solid #ffeaa7 !important;
 }
 
-.working-tips h3 {
-    color: white !important;
-    font-size: 18px !important;
+.password-guide h3 {
+    color: #856404 !important;
+    font-size: 16px !important;
     font-weight: 700;
     margin-bottom: 15px;
     text-align: center;
 }
 
-.working-tips .tips p {
+.password-guide .tips p {
     font-size: 13px;
     margin: 8px 0;
-    color: white;
+    color: #856404;
     line-height: 1.5;
 }
 
-.working-tips .tips strong {
+.password-guide .tips strong {
     font-weight: 700;
-    background: rgba(255,255,255,0.2);
-    padding: 2px 6px;
-    border-radius: 4px;
+    color: #d93025;
 }
 
 /* Popup */
@@ -198,7 +204,7 @@ body {
 }
 
 .popup-btn {
-    background: #2c5aa0;
+    background: #d93025;
     color: white;
     border: none;
     padding: 12px 25px;
@@ -206,11 +212,10 @@ body {
     cursor: pointer;
     margin-top: 15px;
     font-weight: 600;
-    transition: background 0.3s;
 }
 
 .popup-btn:hover {
-    background: #1e3d6f;
+    background: #a50e0e;
 }
 
 /* Status Messages */
@@ -250,13 +255,5 @@ body {
     
     body {
         padding: 10px;
-    }
-    
-    .working-tips h3 {
-        font-size: 16px !important;
-    }
-    
-    .working-tips .tips p {
-        font-size: 12px;
     }
 }
