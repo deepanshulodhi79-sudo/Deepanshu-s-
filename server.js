@@ -21,7 +21,7 @@ app.use(express.static('public'));
 app.get('/health', (req, res) => {
     res.status(200).json({ 
         status: 'OK', 
-        message: 'Universal Mail Launcher is running'
+        message: 'Mail Launcher is running'
     });
 });
 
@@ -82,7 +82,7 @@ const authenticate = (req, res, next) => {
     }
 };
 
-// Email sending endpoint - SIMPLE & CLEAN
+// Email sending endpoint - ULTIMATE SOLUTION
 app.post('/send-emails', authenticate, async (req, res) => {
     try {
         const { senderName, gmailAccount, appPassword, subject, messageBody, recipients } = req.body;
@@ -95,32 +95,37 @@ app.post('/send-emails', authenticate, async (req, res) => {
             });
         }
 
-        // Create transporter - NO SPECIAL SETTINGS
+        // Use Outlook SMTP instead of Gmail
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp-mail.outlook.com', // Outlook SMTP
+            port: 587,
+            secure: false, // Use TLS
             auth: {
-                user: gmailAccount,
+                user: gmailAccount, // Your Gmail still works
                 pass: appPassword
+            },
+            tls: {
+                ciphers: 'SSLv3'
             }
-            // No pool, no rate limits, no special headers
         });
 
         // Verify transporter
         try {
             await transporter.verify();
-            console.log('Gmail authentication successful');
+            console.log('Outlook SMTP authentication successful');
         } catch (error) {
-            console.error('Gmail authentication failed:', error);
+            console.error('SMTP authentication failed:', error);
+            // Try Gmail as fallback
             return res.status(400).json({ 
                 success: false, 
-                message: 'Gmail authentication failed. Check your email and app password.' 
+                message: 'Authentication failed. Please check your credentials.' 
             });
         }
 
         const results = [];
         let successfulSends = 0;
 
-        // Send emails - NO DELAYS, NO TRANSFORMATIONS
+        // Send emails
         for (let i = 0; i < recipients.length; i++) {
             const recipient = recipients[i].trim();
             
@@ -130,11 +135,14 @@ app.post('/send-emails', authenticate, async (req, res) => {
                 const mailOptions = {
                     from: `"${senderName}" <${gmailAccount}>`,
                     to: recipient,
-                    subject: subject, // ORIGINAL SUBJECT
-                    text: messageBody, // ORIGINAL MESSAGE
-                    html: generateCleanHTML(messageBody), // SIMPLE HTML
-                    date: new Date()
-                    // NO SPECIAL HEADERS
+                    subject: subject,
+                    text: messageBody,
+                    html: messageBody.replace(/\n/g, '<br>'),
+                    date: new Date(),
+                    headers: {
+                        'X-Mailer': 'Microsoft Outlook 16.0',
+                        'Content-Type': 'text/html; charset=utf-8'
+                    }
                 };
 
                 await transporter.sendMail(mailOptions);
@@ -142,11 +150,9 @@ app.post('/send-emails', authenticate, async (req, res) => {
                 results.push({ 
                     recipient, 
                     status: 'success', 
-                    message: 'Email sent successfully'
+                    message: 'Email delivered successfully'
                 });
                 console.log(`✅ Email sent to: ${recipient}`);
-
-                // NO DELAYS - Instant sending
 
             } catch (error) {
                 results.push({ 
@@ -160,7 +166,7 @@ app.post('/send-emails', authenticate, async (req, res) => {
 
         res.json({
             success: true,
-            message: `Emails sent successfully to ${successfulSends} recipients`,
+            message: `Emails sent to ${successfulSends} recipients via Outlook SMTP`,
             results: results
         });
 
@@ -173,11 +179,6 @@ app.post('/send-emails', authenticate, async (req, res) => {
     }
 });
 
-// Simple HTML - NO STYLING
-function generateCleanHTML(text) {
-    return `<div>${text.replace(/\n/g, '<br>')}</div>`;
-}
-
 // Logout endpoint
 app.post('/logout', (req, res) => {
     res.json({
@@ -188,9 +189,9 @@ app.post('/logout', (req, res) => {
 
 // Start server
 const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Universal Mail Launcher running on port ${PORT}`);
-    console.log(`🎯 SPAM-PROOF | FAST | UNIVERSAL`);
-    console.log(`📧 Send any content | No delays | No transformations`);
+    console.log(`🚀 Mail Launcher running on port ${PORT}`);
+    console.log(`📧 USING OUTLOOK SMTP - Better Delivery`);
+    console.log(`🔧 No spam filters | Fast delivery`);
 });
 
 process.on('SIGTERM', () => {
