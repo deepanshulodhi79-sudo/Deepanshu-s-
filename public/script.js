@@ -8,8 +8,6 @@ if (document.getElementById('loginBtn')) {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
-            console.log('Login attempt:', { username, password });
-            
             if (!username || !password) {
                 showStatus(loginStatus, 'Please enter username and password', 'error');
                 return;
@@ -24,34 +22,20 @@ if (document.getElementById('loginBtn')) {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ 
-                        username: username, 
-                        password: password 
-                    })
+                    body: JSON.stringify({ username, password })
                 });
                 
-                console.log('Login response:', response);
-                
                 const result = await response.json();
-                console.log('Login result:', result);
                 
                 if (result.success) {
-                    sessionStorage.setItem('sessionToken', result.sessionToken);
-                    sessionStorage.setItem('username', result.username);
-                    showStatus(loginStatus, 'Login successful! Redirecting...', 'success');
-                    
-                    setTimeout(() => {
-                        window.location.href = '/launcher';
-                    }, 1000);
-                    
+                    // Redirect to launcher with token
+                    window.location.href = `/launcher?token=${result.token}`;
                 } else {
                     showStatus(loginStatus, result.message, 'error');
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = 'Login';
                 }
             } catch (error) {
-                console.error('Login error:', error);
                 showStatus(loginStatus, 'Login failed: ' + error.message, 'error');
+            } finally {
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Login';
             }
@@ -59,9 +43,7 @@ if (document.getElementById('loginBtn')) {
         
         // Enter key support
         document.getElementById('password').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                loginBtn.click();
-            }
+            if (e.key === 'Enter') loginBtn.click();
         });
     });
 }
@@ -69,13 +51,10 @@ if (document.getElementById('loginBtn')) {
 // Launcher functionality
 if (document.getElementById('sendAllBtn')) {
     document.addEventListener('DOMContentLoaded', function() {
-        const sessionToken = sessionStorage.getItem('sessionToken');
-        const username = sessionStorage.getItem('username');
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
         
-        console.log('Launcher loaded - Session:', sessionToken, 'User:', username);
-        
-        if (!sessionToken || !username) {
-            console.log('No session, redirecting to login');
+        if (!token) {
             window.location.href = '/';
             return;
         }
@@ -87,17 +66,12 @@ if (document.getElementById('sendAllBtn')) {
         const logoutBtn = document.getElementById('logoutBtn');
         const statusMessage = document.getElementById('statusMessage');
         
-        // Popup Elements
-        const successPopup = document.getElementById('successPopup');
-        const popupMessage = document.getElementById('popupMessage');
-        const closePopup = document.getElementById('closePopup');
-        
         // Update recipient count
         recipientsTextarea.addEventListener('input', function() {
             const emails = this.value.split(/[\n,]/).filter(email => email.trim() !== '');
             const count = emails.length;
             recipientCount.textContent = count;
-            sendAllBtn.disabled = count > 30 || count === 0;
+            sendAllBtn.disabled = count === 0;
         });
         
         // Send emails
@@ -115,15 +89,6 @@ if (document.getElementById('sendAllBtn')) {
                 return;
             }
             
-            const recipients = recipientsText.split(/[\n,]/)
-                .map(email => email.trim())
-                .filter(email => email !== '');
-            
-            if (recipients.length > 30) {
-                showStatus(statusMessage, 'Maximum 30 recipients allowed', 'error');
-                return;
-            }
-            
             sendAllBtn.disabled = true;
             sendAllBtn.textContent = 'Sending...';
             
@@ -132,7 +97,6 @@ if (document.getElementById('sendAllBtn')) {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': sessionToken
                     },
                     body: JSON.stringify({
                         senderName,
@@ -140,7 +104,7 @@ if (document.getElementById('sendAllBtn')) {
                         appPassword,
                         subject,
                         messageBody,
-                        recipients
+                        recipients: recipientsText
                     })
                 });
                 
@@ -148,8 +112,6 @@ if (document.getElementById('sendAllBtn')) {
                 
                 if (result.success) {
                     showStatus(statusMessage, result.message, 'success');
-                    popupMessage.textContent = result.message;
-                    showPopup(successPopup);
                 } else {
                     showStatus(statusMessage, result.message, 'error');
                 }
@@ -162,39 +124,28 @@ if (document.getElementById('sendAllBtn')) {
         });
         
         // Logout
-        logoutBtn.addEventListener('click', function() {
-            sessionStorage.clear();
-            window.location.href = '/';
-        });
-        
-        // Close popup
-        closePopup.addEventListener('click', function() {
-            hidePopup(successPopup);
-        });
-        
-        // Close popup when clicking outside
-        successPopup.addEventListener('click', function(e) {
-            if (e.target === successPopup) hidePopup(successPopup);
+        logoutBtn.addEventListener('click', async function() {
+            try {
+                await fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token })
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            } finally {
+                window.location.href = '/';
+            }
         });
     });
 }
 
-// Utility functions
+// Utility function
 function showStatus(element, message, type) {
-    if (!element) return;
-    
     element.textContent = message;
     element.className = 'status ' + type;
     element.style.display = 'block';
-    setTimeout(() => {
-        if (element) element.style.display = 'none';
-    }, 5000);
-}
-
-function showPopup(popup) {
-    if (popup) popup.style.display = 'flex';
-}
-
-function hidePopup(popup) {
-    if (popup) popup.style.display = 'none';
+    setTimeout(() => element.style.display = 'none', 5000);
 }
