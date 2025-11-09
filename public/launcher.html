@@ -29,6 +29,11 @@
                 <div class="input-group">
                     <label>App Password</label>
                     <input type="password" id="appPassword" placeholder="16 character app password">
+                    <div class="help-text">
+                        <a href="https://support.google.com/accounts/answer/185833" target="_blank">
+                            🔑 How to create App Password?
+                        </a>
+                    </div>
                 </div>
 
                 <div class="input-group">
@@ -50,16 +55,16 @@
                     <div class="counter">Recipients: <span id="recipientCount">0</span>/10</div>
                 </div>
 
-                <!-- Working Tips Section -->
-                <div class="form-section working-tips">
-                    <h3>🎯 GUARANTEED INBOX DELIVERY</h3>
+                <!-- App Password Guide -->
+                <div class="form-section password-guide">
+                    <h3>🔑 APP PASSWORD SETUP</h3>
                     <div class="tips">
-                        <p>• <strong>USE OUTLOOK SMTP</strong> - Better than Gmail</p>
-                        <p>• Write like <strong>personal conversation</strong></p>
-                        <p>• Avoid: FREE, GUARANTEED, SEO, $$$</p>
-                        <p>• Test with 1 email to yourself first</p>
-                        <p>• Use old Gmail account (2012-2015)</p>
-                        <p>• Be patient - First email might take time</p>
+                        <p>1. Go to <strong>Google Account</strong> → Security</p>
+                        <p>2. Enable <strong>2-Factor Authentication</strong></p>
+                        <p>3. Go to <strong>App passwords</strong></p>
+                        <p>4. Generate password for <strong>Mail</strong></p>
+                        <p>5. Use the <strong>16-character</strong> password here</p>
+                        <p>6. <strong>DO NOT</strong> use your regular Gmail password</p>
                     </div>
                 </div>
 
@@ -75,7 +80,7 @@
     <div id="successPopup" class="simple-popup">
         <div class="popup-content">
             <h3>✅ Success!</h3>
-            <p id="popupMessage">Emails sent via Outlook SMTP for better delivery!</p>
+            <p id="popupMessage">Emails sent successfully!</p>
             <button id="closePopup" class="popup-btn">OK</button>
         </div>
     </div>
