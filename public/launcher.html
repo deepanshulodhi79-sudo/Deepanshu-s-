@@ -18,22 +18,22 @@
             <div class="left-column">
                 <div class="input-group">
                     <label>Sender Name</label>
-                    <input type="text" id="senderName" placeholder="Enter your real name">
+                    <input type="text" id="senderName" placeholder="Your Real Name">
                 </div>
 
                 <div class="input-group">
-                    <label>Your Email</label>
+                    <label>Your Gmail</label>
                     <input type="email" id="gmailAccount" placeholder="your.email@gmail.com">
                 </div>
 
                 <div class="input-group">
                     <label>App Password</label>
-                    <input type="password" id="appPassword" placeholder="Enter app password">
+                    <input type="password" id="appPassword" placeholder="16 character app password">
                 </div>
 
                 <div class="input-group">
                     <label>Subject</label>
-                    <input type="text" id="subject" placeholder="Email subject">
+                    <input type="text" id="subject" placeholder="Natural subject line">
                 </div>
             </div>
 
@@ -41,41 +41,41 @@
             <div class="right-column">
                 <div class="input-group">
                     <label>Message Body</label>
-                    <textarea id="messageBody" placeholder="Type your message here..." rows="6"></textarea>
+                    <textarea id="messageBody" placeholder="Write natural, conversational message..." rows="6"></textarea>
                 </div>
 
                 <div class="input-group">
                     <label>Recipients (comma or newline)</label>
                     <textarea id="recipients" placeholder="Enter email addresses" rows="4"></textarea>
-                    <div class="counter">Recipients: <span id="recipientCount">0</span>/30</div>
+                    <div class="counter">Recipients: <span id="recipientCount">0</span>/10</div>
                 </div>
 
-                <!-- Success Tips Section -->
-                <div class="form-section success-tips">
-                    <h3>✅ Inbox Delivery Tips</h3>
+                <!-- Working Tips Section -->
+                <div class="form-section working-tips">
+                    <h3>🎯 GUARANTEED INBOX DELIVERY</h3>
                     <div class="tips">
-                        <p>• Use your <strong>real name</strong> as sender</p>
-                        <p>• Write <strong>natural, conversational</strong> content</p>
-                        <p>• Avoid words like "free", "guaranteed", "winner"</p>
-                        <p>• Don't use ALL CAPS in subject</p>
-                        <p>• Start with 1-2 test emails first</p>
-                        <p>• Use old Gmail accounts (2012-2015 best)</p>
+                        <p>• <strong>USE OUTLOOK SMTP</strong> - Better than Gmail</p>
+                        <p>• Write like <strong>personal conversation</strong></p>
+                        <p>• Avoid: FREE, GUARANTEED, SEO, $$$</p>
+                        <p>• Test with 1 email to yourself first</p>
+                        <p>• Use old Gmail account (2012-2015)</p>
+                        <p>• Be patient - First email might take time</p>
                     </div>
                 </div>
 
                 <div class="action-buttons">
-                    <button id="sendAllBtn" class="send-btn">Send All</button>
+                    <button id="sendAllBtn" class="send-btn">Send All Emails</button>
                     <div id="statusMessage" class="status"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Simple Popup -->
+    <!-- Success Popup -->
     <div id="successPopup" class="simple-popup">
         <div class="popup-content">
-            <h3>Success!</h3>
-            <p id="popupMessage">Emails sent successfully!</p>
+            <h3>✅ Success!</h3>
+            <p id="popupMessage">Emails sent via Outlook SMTP for better delivery!</p>
             <button id="closePopup" class="popup-btn">OK</button>
         </div>
     </div>
