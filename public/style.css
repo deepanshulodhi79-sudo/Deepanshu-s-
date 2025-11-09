@@ -6,93 +6,43 @@
 }
 
 body {
-    background: #f5f5f5;
+    background: #f0f8ff;
     min-height: 100vh;
     padding: 20px;
     color: #333;
 }
 
-/* Simple Container */
 .simple-container {
     max-width: 1000px;
     margin: 0 auto;
 }
 
-/* Login Styles */
-.simple-card {
-    background: white;
-    border-radius: 8px;
-    padding: 40px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    max-width: 400px;
-    margin: 100px auto;
-    text-align: center;
-}
-
-.simple-card h1 {
-    font-size: 24px;
-    margin-bottom: 30px;
-    color: #333;
-    font-weight: 600;
-}
-
-.input-group {
-    margin-bottom: 20px;
-}
-
-.input-group input {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-}
-
-.input-group input:focus {
-    outline: none;
-    border-color: #007bff;
-}
-
-.simple-card button {
-    width: 100%;
-    padding: 12px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.simple-card button:hover {
-    background: #0056b3;
-}
-
-/* Launcher Styles */
 .simple-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #eee;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .simple-header h1 {
-    font-size: 24px;
-    color: #333;
-    font-weight: 600;
+    font-size: 28px;
+    color: #2c5aa0;
+    font-weight: 700;
 }
 
 .logout-btn {
     background: #6c757d;
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 10px 20px;
     border-radius: 6px;
     font-size: 14px;
     cursor: pointer;
+    transition: background 0.3s;
 }
 
 .logout-btn:hover {
@@ -102,7 +52,7 @@ body {
 .simple-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 30px;
+    gap: 25px;
 }
 
 .left-column, .right-column {
@@ -119,22 +69,24 @@ body {
 
 .input-group label {
     font-size: 14px;
-    font-weight: 500;
-    color: #555;
+    font-weight: 600;
+    color: #2c5aa0;
 }
 
 .input-group input, .input-group textarea {
-    padding: 10px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    padding: 12px 15px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
     font-size: 14px;
     width: 100%;
     resize: vertical;
+    transition: border-color 0.3s;
 }
 
 .input-group input:focus, .input-group textarea:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: #2c5aa0;
+    box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
 }
 
 .input-group textarea {
@@ -146,68 +98,76 @@ body {
     font-size: 12px;
     color: #666;
     text-align: right;
+    font-weight: 500;
 }
 
 .action-buttons {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
 }
 
 .send-btn {
     background: #28a745;
     color: white;
     border: none;
-    padding: 12px 20px;
-    border-radius: 6px;
-    font-size: 14px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-size: 16px;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
+    transition: background 0.3s;
 }
 
 .send-btn:hover {
     background: #218838;
+    transform: translateY(-1px);
 }
 
 .send-btn:disabled {
     background: #6c757d;
     cursor: not-allowed;
+    transform: none;
 }
 
-/* Success Tips Section */
+/* Working Tips Section */
 .form-section {
     background: white;
-    padding: 20px;
-    border-radius: 8px;
+    padding: 25px;
+    border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    border: 1px solid #e9ecef;
+    border: 2px solid #e1e5e9;
 }
 
-.success-tips {
-    background: #d4edda !important;
-    border: 1px solid #c3e6cb !important;
+.working-tips {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    color: white;
 }
 
-.success-tips h3 {
-    color: #155724 !important;
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 10px;
-    text-transform: none;
+.working-tips h3 {
+    color: white !important;
+    font-size: 18px !important;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-align: center;
 }
 
-.tips p {
-    font-size: 12px;
-    margin: 5px 0;
-    color: #155724;
-    line-height: 1.4;
+.working-tips .tips p {
+    font-size: 13px;
+    margin: 8px 0;
+    color: white;
+    line-height: 1.5;
 }
 
-.tips strong {
-    font-weight: 600;
+.working-tips .tips strong {
+    font-weight: 700;
+    background: rgba(255,255,255,0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 
-/* Simple Popup */
+/* Popup */
 .simple-popup {
     display: none;
     position: fixed;
@@ -215,7 +175,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.7);
     z-index: 1000;
     justify-content: center;
     align-items: center;
@@ -224,8 +184,8 @@ body {
 .popup-content {
     background: white;
     padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     text-align: center;
     max-width: 400px;
     width: 90%;
@@ -234,29 +194,33 @@ body {
 .popup-content h3 {
     margin-bottom: 15px;
     color: #28a745;
+    font-size: 22px;
 }
 
 .popup-btn {
-    background: #007bff;
+    background: #2c5aa0;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 12px 25px;
     border-radius: 6px;
     cursor: pointer;
     margin-top: 15px;
+    font-weight: 600;
+    transition: background 0.3s;
 }
 
 .popup-btn:hover {
-    background: #0056b3;
+    background: #1e3d6f;
 }
 
 /* Status Messages */
 .status {
-    padding: 10px;
-    border-radius: 4px;
-    font-size: 13px;
+    padding: 12px 15px;
+    border-radius: 6px;
+    font-size: 14px;
     display: none;
     text-align: center;
+    font-weight: 500;
 }
 
 .status.success {
@@ -288,16 +252,11 @@ body {
         padding: 10px;
     }
     
-    .simple-card {
-        padding: 30px 20px;
-        margin: 50px auto;
+    .working-tips h3 {
+        font-size: 16px !important;
     }
     
-    .form-section {
-        padding: 15px;
-    }
-    
-    .tips p {
-        font-size: 11px;
+    .working-tips .tips p {
+        font-size: 12px;
     }
 }
