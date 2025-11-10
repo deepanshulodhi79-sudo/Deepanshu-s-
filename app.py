@@ -10,7 +10,6 @@ from functools import wraps
 import time
 import re
 import random
-import dns.resolver
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here-12345')
@@ -88,18 +87,22 @@ def dashboard():
     return render_template('dashboard.html', username=session.get('username'))
 
 def is_valid_email(email):
-    """Enhanced email validation with DNS check"""
+    """Enhanced email validation without DNS"""
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     if not re.match(pattern, email):
         return False
     
-    try:
-        domain = email.split('@')[1]
-        # Check MX records
-        dns.resolver.resolve(domain, 'MX')
-        return True
-    except:
+    # Common disposable email domains (basic check)
+    disposable_domains = [
+        'tempmail.com', 'throwaway.com', 'fake.com', 'trashmail.com',
+        'guerrillamail.com', 'mailinator.com', 'yopmail.com'
+    ]
+    
+    domain = email.split('@')[1].lower()
+    if domain in disposable_domains:
         return False
+        
+    return True
 
 def create_professional_email(sender_name, sender_email, message, template_type='business'):
     """Create professional email content"""
@@ -115,19 +118,16 @@ Thank you for your time and consideration.
 
 {template['closing']},
 {sender_name}
-{sender_email}
-
---
-This email was sent from a professional account."""
+{sender_email}"""
     
     return email_content
 
-def send_single_email(sender_email, sender_name, app_password, receiver_email, subject, message):
+def send_single_email(sender_email, sender_name, app_password, receiver_email, subject, message, template_type='business'):
     """Single email send karne ka function with enterprise-level headers"""
     try:
         # Use different SMTP ports
         smtp_server = "smtp.gmail.com"
-        port = 587  # You can also try 465 for SSL
+        port = 587
         
         # Create message
         msg = MIMEMultipart()
@@ -145,11 +145,9 @@ def send_single_email(sender_email, sender_name, app_password, receiver_email, s
         msg['MIME-Version'] = '1.0'
         msg['Content-Type'] = 'text/plain; charset="utf-8"'
         msg['Content-Transfer-Encoding'] = '8bit'
-        msg['X-Originator'] = sender_email
-        msg['X-Sender'] = sender_email
         
         # Professional email body
-        professional_body = create_professional_email(sender_name, sender_email, message)
+        professional_body = create_professional_email(sender_name, sender_email, message, template_type)
         msg.attach(MIMEText(professional_body, 'plain', 'utf-8'))
         
         # SMTP connection with proper timeout
@@ -216,12 +214,12 @@ def send_email():
         
         # Validate and limit emails
         valid_emails = [email for email in email_list if is_valid_email(email)]
-        valid_emails = valid_emails[:10]  # Further reduced for safety
+        valid_emails = valid_emails[:8]  # Reduced for safety
         
         if len(valid_emails) == 0:
             return jsonify({'success': False, 'message': 'No valid email addresses found!'})
         
-        # Use professional template
+        # Use professional template subject
         professional_subject = PROFESSIONAL_TEMPLATES[template_type]['subject']
         if subject != professional_subject:
             subject = f"{professional_subject}: {subject}"
@@ -231,14 +229,14 @@ def send_email():
         
         # Send emails with progressive delays
         for i, receiver_email in enumerate(valid_emails):
-            # Progressive delay: 10-15 seconds between emails
+            # Progressive delay: 15-20 seconds between emails
             if i > 0:
-                delay = random.randint(10, 15)
+                delay = random.randint(15, 20)
                 time.sleep(delay)
             
             success, msg = send_single_email(
                 sender_email, sender_name, app_password, 
-                receiver_email, subject, message
+                receiver_email, subject, message, template_type
             )
             
             if success:
@@ -248,12 +246,12 @@ def send_email():
                 results.append(f"❌ {receiver_email}: {msg}")
             
             # Break if too many failures
-            if i >= 2 and successful_count == 0:
+            if i >= 3 and successful_count == 0:
                 results.append("⚠️ Stopping: Multiple consecutive failures detected")
                 break
         
         # Calculate success rate
-        success_rate = (successful_count / len(valid_emails)) * 100
+        success_rate = (successful_count / len(valid_emails)) * 100 if valid_emails else 0
         
         return jsonify({
             'success': True if successful_count > 0 else False, 
