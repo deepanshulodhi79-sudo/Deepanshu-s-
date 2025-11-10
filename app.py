@@ -10,7 +10,7 @@ from functools import wraps
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here-12345')
 
-# Hardcoded Login Credentials (In production, use environment variables)
+# Hardcoded Login Credentials
 HARDCODED_CREDENTIALS = {
     'admin': 'admin123',
     'user': 'user123',
@@ -66,25 +66,44 @@ def send_email():
     try:
         # Get form data
         sender_email = request.form['sender_email']
+        sender_name = request.form['sender_name']  # New sender name field
         app_password = request.form['app_password']
         receiver_email = request.form['receiver_email']
         subject = request.form['subject']
         message = request.form['message']
         
         # Validate required fields
-        if not all([sender_email, app_password, receiver_email, subject, message]):
+        if not all([sender_email, sender_name, app_password, receiver_email, subject, message]):
             return jsonify({'success': False, 'message': 'All fields are required!'})
         
         # Gmail SMTP settings
         smtp_server = "smtp.gmail.com"
         port = 587
         
-        # Create message
+        # Create message with sender name
         msg = MIMEMultipart()
-        msg['From'] = sender_email
+        msg['From'] = f'{sender_name} <{sender_email}>'  # Sender name + email
         msg['To'] = receiver_email
         msg['Subject'] = subject
-        msg.attach(MIMEText(message, 'plain'))
+        
+        # Add headers to avoid spam
+        msg['Reply-To'] = sender_email
+        msg['X-Mailer'] = 'Custom Python SMTP'
+        msg['X-Priority'] = '3'
+        
+        # Create professional email body to avoid spam
+        professional_message = f"""
+{message}
+
+---
+Best Regards,
+{sender_name}
+{sender_email}
+
+Note: This email was sent via custom email application.
+"""
+        
+        msg.attach(MIMEText(professional_message, 'plain'))
         
         # Connect to SMTP server and send email
         server = smtplib.SMTP(smtp_server, port)
@@ -96,23 +115,29 @@ def send_email():
         server.quit()
         
         # Log the email sending activity
-        app.logger.info(f"Email sent from {sender_email} to {receiver_email} by user {session['username']}")
+        app.logger.info(f"Email sent from {sender_name} ({sender_email}) to {receiver_email} by user {session['username']}")
         
         return jsonify({
             'success': True, 
-            'message': 'Email successfully sent!'
+            'message': '✅ Email successfully sent! Receiver ko professional format mein dikhega.',
+            'sender_name': sender_name
         })
         
     except smtplib.SMTPAuthenticationError:
         return jsonify({
             'success': False, 
-            'message': 'Authentication failed! Check your email and app password.'
+            'message': '❌ Authentication failed! Check your email and app password.'
+        })
+    except smtplib.SMTPRecipientsRefused:
+        return jsonify({
+            'success': False,
+            'message': '❌ Receiver email invalid hai! Sahi email address dalen.'
         })
     except Exception as e:
         app.logger.error(f"Email sending error: {str(e)}")
         return jsonify({
             'success': False, 
-            'message': f'Error: {str(e)}'
+            'message': f'❌ Error: {str(e)}'
         })
 
 @app.route('/api/health')
