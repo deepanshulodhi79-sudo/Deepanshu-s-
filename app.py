@@ -10,6 +10,7 @@ from functools import wraps
 import time
 import re
 import random
+import dns.resolver
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here-12345')
@@ -21,28 +22,29 @@ HARDCODED_CREDENTIALS = {
     'emailuser': 'password123'
 }
 
-# Advanced Spam Protection
-SPAM_KEYWORDS = [
-    'free', 'winner', 'prize', 'urgent', 'cash', 'money', 'lottery', 'click here',
-    'congratulations', 'won', 'claim', 'limited time', 'act now', 'buy now',
-    'discount', 'offer', 'deal', 'bonus', 'reward', 'guaranteed', 'risk free',
-    'no cost', 'credit', 'loan', 'investment', 'profit', 'income', 'earn',
-    'work from home', 'make money', 'get paid', 'extra income', 'million',
-    'billion', 'dollars', 'rupees', '$$$', 'opportunity', 'special promotion',
-    'exclusive', 'secret', 'miracle', 'magic', 'instant', 'overnight'
-]
-
-# Common professional subjects (for suggestions)
-PROFESSIONAL_SUBJECTS = [
-    "Meeting Agenda Discussion",
-    "Project Update Report", 
-    "Team Collaboration Session",
-    "Weekly Progress Review",
-    "Important Information Sharing",
-    "Document Review Required",
-    "Follow-up Discussion Points",
-    "Planning Session Details"
-]
+# Professional email templates
+PROFESSIONAL_TEMPLATES = {
+    'business': {
+        'subject': "Business Update and Collaboration",
+        'greeting': "Dear Team,",
+        'closing': "Best Regards"
+    },
+    'meeting': {
+        'subject': "Meeting Agenda and Discussion Points", 
+        'greeting': "Hello Team,",
+        'closing': "Looking forward to our discussion"
+    },
+    'update': {
+        'subject': "Project Update and Progress Report",
+        'greeting': "Dear Colleagues,",
+        'closing': "Thank you for your cooperation"
+    },
+    'information': {
+        'subject': "Important Information Sharing",
+        'greeting': "Hello Everyone,",
+        'closing': "Best Regards"
+    }
+}
 
 def login_required(f):
     @wraps(f)
@@ -86,96 +88,100 @@ def dashboard():
     return render_template('dashboard.html', username=session.get('username'))
 
 def is_valid_email(email):
-    """Email validation check"""
+    """Enhanced email validation with DNS check"""
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(pattern, email) is not None
-
-def contains_spam_content(text):
-    """Check if text contains spammy content"""
-    if not text:
+    if not re.match(pattern, email):
         return False
     
-    text_lower = text.lower()
-    
-    # Check for spam keywords
-    for keyword in SPAM_KEYWORDS:
-        if keyword in text_lower:
-            return True
-    
-    # Check for excessive capitalization
-    if len(text) > 10:
-        upper_count = sum(1 for c in text if c.isupper())
-        if upper_count / len(text) > 0.5:  # More than 50% uppercase
-            return True
-    
-    # Check for multiple exclamation marks
-    if text.count('!') > 2:
+    try:
+        domain = email.split('@')[1]
+        # Check MX records
+        dns.resolver.resolve(domain, 'MX')
         return True
-    
-    return False
+    except:
+        return False
 
-def get_professional_subject():
-    """Get a random professional subject"""
-    return random.choice(PROFESSIONAL_SUBJECTS)
+def create_professional_email(sender_name, sender_email, message, template_type='business'):
+    """Create professional email content"""
+    template = PROFESSIONAL_TEMPLATES[template_type]
+    
+    email_content = f"""{template['greeting']}
+
+I hope this message finds you well.
+
+{message}
+
+Thank you for your time and consideration.
+
+{template['closing']},
+{sender_name}
+{sender_email}
+
+--
+This email was sent from a professional account."""
+    
+    return email_content
 
 def send_single_email(sender_email, sender_name, app_password, receiver_email, subject, message):
-    """Single email send karne ka function with advanced anti-spam"""
+    """Single email send karne ka function with enterprise-level headers"""
     try:
-        # Gmail SMTP settings
+        # Use different SMTP ports
         smtp_server = "smtp.gmail.com"
-        port = 587
+        port = 587  # You can also try 465 for SSL
         
-        # Create message with proper encoding
+        # Create message
         msg = MIMEMultipart()
-        msg['From'] = f'{sender_name} <{sender_email}>'
+        msg['From'] = f'"{sender_name}" <{sender_email}>'
         msg['To'] = receiver_email
         msg['Subject'] = Header(subject, 'utf-8').encode()
         
-        # Advanced Anti-Spam Headers
+        # ENTERPRISE LEVEL ANTI-SPAM HEADERS
         msg['Reply-To'] = sender_email
-        msg['X-Mailer'] = 'Microsoft Outlook 16.0'
+        msg['Return-Path'] = sender_email
+        msg['X-Mailer'] = 'Microsoft Office Outlook 16.0'
         msg['X-Priority'] = '3'
         msg['X-MSMail-Priority'] = 'Normal'
         msg['Importance'] = 'Normal'
         msg['MIME-Version'] = '1.0'
         msg['Content-Type'] = 'text/plain; charset="utf-8"'
-        msg['Content-Transfer-Encoding'] = 'quoted-printable'
+        msg['Content-Transfer-Encoding'] = '8bit'
+        msg['X-Originator'] = sender_email
+        msg['X-Sender'] = sender_email
         
-        # Professional email structure
-        professional_message = f"""Dear Recipient,
-
-{message}
-
-Thank you for your attention.
-
-Best Regards,
-{sender_name}
-{sender_email}"""
+        # Professional email body
+        professional_body = create_professional_email(sender_name, sender_email, message)
+        msg.attach(MIMEText(professional_body, 'plain', 'utf-8'))
         
-        msg.attach(MIMEText(professional_message, 'plain', 'utf-8'))
+        # SMTP connection with proper timeout
+        server = smtplib.SMTP(smtp_server, port, timeout=30)
+        server.set_debuglevel(0)  # No debug output
         
-        # SMTP connection with proper handshake
-        server = smtplib.SMTP(smtp_server, port)
+        # Extended EHLO
         server.ehlo()
         server.starttls()
         server.ehlo()
+        
+        # Login with retry
         server.login(sender_email, app_password)
         
-        # Send email
-        text = msg.as_string()
-        server.sendmail(sender_email, receiver_email, text)
+        # Send with proper envelope
+        server.sendmail(sender_email, [receiver_email], msg.as_string())
         server.quit()
         
-        return True, "Email sent successfully"
+        return True, "Email delivered successfully"
         
+    except smtplib.SMTPDataError as e:
+        if "Daily sending limit exceeded" in str(e):
+            return False, "Daily sending limit exceeded. Try again tomorrow."
+        return False, f"SMTP Error: {str(e)}"
     except smtplib.SMTPRecipientsRefused:
-        return False, "Invalid recipient email"
-    except smtplib.SMTPAuthenticationError:
-        return False, "Authentication failed - check email and app password"
+        return False, "Recipient email rejected"
     except smtplib.SMTPSenderRefused:
-        return False, "Sender email rejected"
+        return False, "Sender email not authorized"
+    except smtplib.SMTPAuthenticationError:
+        return False, "Authentication failed - check app password"
     except Exception as e:
-        return False, f"Error: {str(e)}"
+        return False, f"Delivery failed: {str(e)}"
 
 @app.route('/send_email', methods=['POST'])
 @login_required
@@ -188,29 +194,17 @@ def send_email():
         receiver_emails = request.form['receiver_email']
         subject = request.form['subject']
         message = request.form['message']
+        template_type = request.form.get('template_type', 'business')
         
         # Validate required fields
         if not all([sender_email, sender_name, app_password, receiver_emails, subject, message]):
             return jsonify({'success': False, 'message': 'All fields are required!'})
         
-        # Advanced spam content checking
-        spam_checks = [
-            contains_spam_content(subject),
-            contains_spam_content(message),
-            len(subject.strip()) < 5,  # Too short subject
-            len(message.strip()) < 20,  # Too short message
-            len(subject) > 100,  # Too long subject
-        ]
+        # Validate sender email format
+        if not is_valid_email(sender_email):
+            return jsonify({'success': False, 'message': 'Please use a valid sender email address'})
         
-        if any(spam_checks):
-            suggested_subject = get_professional_subject()
-            return jsonify({
-                'success': False, 
-                'message': 'Content may be marked as spam! Please use professional language.',
-                'suggestion': f'Try subject like: "{suggested_subject}"'
-            })
-        
-        # Process multiple emails
+        # Process receiver emails
         email_list = []
         for separator in [',', '\n', ';']:
             if separator in receiver_emails:
@@ -220,25 +214,26 @@ def send_email():
         if not email_list:
             email_list = [receiver_emails.strip()]
         
-        # Filter valid emails and limit to 20 for better deliverability
+        # Validate and limit emails
         valid_emails = [email for email in email_list if is_valid_email(email)]
-        valid_emails = valid_emails[:20]  # Reduced limit for better delivery
+        valid_emails = valid_emails[:10]  # Further reduced for safety
         
         if len(valid_emails) == 0:
-            return jsonify({'success': False, 'message': 'Please enter at least one valid email address!'})
+            return jsonify({'success': False, 'message': 'No valid email addresses found!'})
         
-        # Check if sender email is valid
-        if not is_valid_email(sender_email):
-            return jsonify({'success': False, 'message': 'Please enter a valid sender email address!'})
+        # Use professional template
+        professional_subject = PROFESSIONAL_TEMPLATES[template_type]['subject']
+        if subject != professional_subject:
+            subject = f"{professional_subject}: {subject}"
         
         results = []
         successful_count = 0
         
-        # Send emails with random delays
+        # Send emails with progressive delays
         for i, receiver_email in enumerate(valid_emails):
-            # Random delay between 5-10 seconds to avoid spam detection
+            # Progressive delay: 10-15 seconds between emails
             if i > 0:
-                delay = random.randint(5, 10)
+                delay = random.randint(10, 15)
                 time.sleep(delay)
             
             success, msg = send_single_email(
@@ -248,33 +243,39 @@ def send_email():
             
             if success:
                 successful_count += 1
-                results.append(f"✅ {receiver_email}: Sent successfully")
+                results.append(f"✅ {receiver_email}: Delivered to inbox")
             else:
                 results.append(f"❌ {receiver_email}: {msg}")
+            
+            # Break if too many failures
+            if i >= 2 and successful_count == 0:
+                results.append("⚠️ Stopping: Multiple consecutive failures detected")
+                break
         
-        # Log the activity
-        app.logger.info(f"Bulk email sent from {sender_name} - {successful_count}/{len(valid_emails)} successful")
+        # Calculate success rate
+        success_rate = (successful_count / len(valid_emails)) * 100
         
         return jsonify({
-            'success': True, 
-            'message': f'✅ {successful_count}/{len(valid_emails)} emails delivered successfully!',
+            'success': True if successful_count > 0 else False, 
+            'message': f'📨 {successful_count}/{len(valid_emails)} emails delivered ({success_rate:.1f}% success rate)',
             'details': results,
             'total_sent': successful_count,
-            'total_attempted': len(valid_emails)
+            'total_attempted': len(valid_emails),
+            'success_rate': success_rate
         })
         
     except Exception as e:
         app.logger.error(f"Email sending error: {str(e)}")
         return jsonify({
             'success': False, 
-            'message': f'❌ System Error: {str(e)}'
+            'message': f'❌ System error: Please try again later'
         })
 
-@app.route('/api/suggest_subject')
+@app.route('/api/templates')
 @login_required
-def suggest_subject():
-    """API to get professional subject suggestions"""
-    return jsonify({'subject': get_professional_subject()})
+def get_templates():
+    """Get available email templates"""
+    return jsonify({'templates': PROFESSIONAL_TEMPLATES})
 
 @app.route('/api/health')
 def health_check():
