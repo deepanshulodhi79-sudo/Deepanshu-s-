@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, session, jsonify
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -10,12 +10,37 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "default_secret")
 
+# 🔐 Hardcoded login credentials
+ADMIN_USER = "admin"
+ADMIN_PASS = "12345"  # change as needed
+
 @app.route('/')
 def home():
-    return redirect('/launcher')
+    if 'logged_in' in session:
+        return redirect('/launcher')
+    return redirect('/login')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username == ADMIN_USER and password == ADMIN_PASS:
+            session['logged_in'] = True
+            return redirect('/launcher')
+        else:
+            return render_template('login.html', message="Invalid username or password")
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect('/login')
 
 @app.route('/launcher', methods=['GET'])
 def launcher():
+    if 'logged_in' not in session:
+        return redirect('/login')
     return render_template('dashboard.html')
 
 @app.route('/send', methods=['POST'])
@@ -45,7 +70,7 @@ def send_email():
                 server.send_message(msg)
             
             success += 1
-            time.sleep(1)  # slight delay to avoid spam filters
+            time.sleep(1)
         except Exception as e:
             print(f"Failed to send to {to_email}: {e}")
             failed += 1
