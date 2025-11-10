@@ -7,6 +7,7 @@ from datetime import datetime
 import logging
 from functools import wraps
 import time
+import re
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here-12345')
@@ -61,8 +62,13 @@ def logout():
 def dashboard():
     return render_template('dashboard.html', username=session.get('username'))
 
+def is_valid_email(email):
+    """Email validation check"""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
 def send_single_email(sender_email, sender_name, app_password, receiver_email, subject, message):
-    """Single email send karne ka function"""
+    """Single email send karne ka function with spam protection"""
     try:
         # Gmail SMTP settings
         smtp_server = "smtp.gmail.com"
@@ -74,23 +80,26 @@ def send_single_email(sender_email, sender_name, app_password, receiver_email, s
         msg['To'] = receiver_email
         msg['Subject'] = subject
         
-        # Add headers to avoid spam
+        # Anti-Spam Headers
         msg['Reply-To'] = sender_email
+        msg['X-Mailer'] = 'Microsoft Outlook 16.0'  # Common email client
+        msg['X-Priority'] = '3'
+        msg['X-MSMail-Priority'] = 'Normal'
+        msg['Importance'] = 'Normal'
         
-        # Clean message without any extra notes
-        clean_message = f"""
-{message}
+        # Clean professional message without extra notes
+        clean_message = f"""{message}
 
----
 Best Regards,
-{sender_name}
-"""
+{sender_name}"""
         
-        msg.attach(MIMEText(clean_message, 'plain'))
+        msg.attach(MIMEText(clean_message, 'plain', 'utf-8'))
         
         # Connect to SMTP server and send email
         server = smtplib.SMTP(smtp_server, port)
-        server.starttls()
+        server.ehlo()  # Identify ourselves to SMTP server
+        server.starttls()  # Secure connection
+        server.ehlo()  # Re-identify ourselves over TLS connection
         server.login(sender_email, app_password)
         
         text = msg.as_string()
@@ -99,6 +108,10 @@ Best Regards,
         
         return True, "Email sent successfully"
         
+    except smtplib.SMTPRecipientsRefused:
+        return False, "Invalid recipient email"
+    except smtplib.SMTPAuthenticationError:
+        return False, "Authentication failed - check email and app password"
     except Exception as e:
         return False, f"Error: {str(e)}"
 
@@ -118,20 +131,44 @@ def send_email():
         if not all([sender_email, sender_name, app_password, receiver_emails, subject, message]):
             return jsonify({'success': False, 'message': 'All fields are required!'})
         
-        # Process multiple emails
-        email_list = [email.strip() for email in receiver_emails.split(',') if email.strip()]
-        email_list = email_list[:30]  # Maximum 30 emails
+        # Process multiple emails (both comma and line separated)
+        email_list = []
+        for separator in [',', '\n', ';']:
+            if separator in receiver_emails:
+                email_list = [email.strip() for email in receiver_emails.split(separator) if email.strip()]
+                break
         
-        if len(email_list) == 0:
+        # If no separator found, treat as single email
+        if not email_list:
+            email_list = [receiver_emails.strip()]
+        
+        # Filter valid emails and limit to 30
+        valid_emails = [email for email in email_list if is_valid_email(email)]
+        valid_emails = valid_emails[:30]  # Maximum 30 emails
+        
+        if len(valid_emails) == 0:
             return jsonify({'success': False, 'message': 'Please enter at least one valid email address!'})
+        
+        # Check for spammy content
+        spam_keywords = ['free', 'winner', 'prize', 'urgent', 'cash', 'money', 'lottery', 'click here']
+        subject_lower = subject.lower()
+        message_lower = message.lower()
+        
+        spam_detected = any(keyword in subject_lower or keyword in message_lower for keyword in spam_keywords)
+        
+        if spam_detected:
+            return jsonify({
+                'success': False, 
+                'message': 'Spam-like content detected! Please use a professional subject and message.'
+            })
         
         results = []
         successful_count = 0
         
-        for i, receiver_email in enumerate(email_list):
-            # Add delay to avoid spam detection
+        for i, receiver_email in enumerate(valid_emails):
+            # Add delay to avoid spam detection (3 seconds between emails)
             if i > 0:
-                time.sleep(2)  # 2 second delay between emails
+                time.sleep(3)
             
             success, msg = send_single_email(
                 sender_email, sender_name, app_password, 
@@ -142,24 +179,24 @@ def send_email():
                 successful_count += 1
                 results.append(f"✅ {receiver_email}: Sent successfully")
             else:
-                results.append(f"❌ {receiver_email}: Failed - {msg}")
+                results.append(f"❌ {receiver_email}: {msg}")
         
         # Log the activity
-        app.logger.info(f"Bulk email sent from {sender_name} - {successful_count}/{len(email_list)} successful")
+        app.logger.info(f"Bulk email sent from {sender_name} - {successful_count}/{len(valid_emails)} successful")
         
         return jsonify({
             'success': True, 
-            'message': f'✅ {successful_count}/{len(email_list)} emails sent successfully!',
+            'message': f'✅ {successful_count}/{len(valid_emails)} emails sent successfully!',
             'details': results,
             'total_sent': successful_count,
-            'total_attempted': len(email_list)
+            'total_attempted': len(valid_emails)
         })
         
     except Exception as e:
         app.logger.error(f"Email sending error: {str(e)}")
         return jsonify({
             'success': False, 
-            'message': f'❌ Error: {str(e)}'
+            'message': f'❌ System Error: {str(e)}'
         })
 
 @app.route('/api/health')
