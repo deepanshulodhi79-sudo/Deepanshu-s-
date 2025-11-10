@@ -6,6 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 import logging
 from functools import wraps
+import time
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here-12345')
@@ -60,50 +61,32 @@ def logout():
 def dashboard():
     return render_template('dashboard.html', username=session.get('username'))
 
-@app.route('/send_email', methods=['POST'])
-@login_required
-def send_email():
+def send_single_email(sender_email, sender_name, app_password, receiver_email, subject, message):
+    """Single email send karne ka function"""
     try:
-        # Get form data
-        sender_email = request.form['sender_email']
-        sender_name = request.form['sender_name']  # New sender name field
-        app_password = request.form['app_password']
-        receiver_email = request.form['receiver_email']
-        subject = request.form['subject']
-        message = request.form['message']
-        
-        # Validate required fields
-        if not all([sender_email, sender_name, app_password, receiver_email, subject, message]):
-            return jsonify({'success': False, 'message': 'All fields are required!'})
-        
         # Gmail SMTP settings
         smtp_server = "smtp.gmail.com"
         port = 587
         
         # Create message with sender name
         msg = MIMEMultipart()
-        msg['From'] = f'{sender_name} <{sender_email}>'  # Sender name + email
+        msg['From'] = f'{sender_name} <{sender_email}>'
         msg['To'] = receiver_email
         msg['Subject'] = subject
         
         # Add headers to avoid spam
         msg['Reply-To'] = sender_email
-        msg['X-Mailer'] = 'Custom Python SMTP'
-        msg['X-Priority'] = '3'
         
-        # Create professional email body to avoid spam
-        professional_message = f"""
+        # Clean message without any extra notes
+        clean_message = f"""
 {message}
 
 ---
 Best Regards,
 {sender_name}
-{sender_email}
-
-Note: This email was sent via custom email application.
 """
         
-        msg.attach(MIMEText(professional_message, 'plain'))
+        msg.attach(MIMEText(clean_message, 'plain'))
         
         # Connect to SMTP server and send email
         server = smtplib.SMTP(smtp_server, port)
@@ -114,25 +97,64 @@ Note: This email was sent via custom email application.
         server.sendmail(sender_email, receiver_email, text)
         server.quit()
         
-        # Log the email sending activity
-        app.logger.info(f"Email sent from {sender_name} ({sender_email}) to {receiver_email} by user {session['username']}")
+        return True, "Email sent successfully"
+        
+    except Exception as e:
+        return False, f"Error: {str(e)}"
+
+@app.route('/send_email', methods=['POST'])
+@login_required
+def send_email():
+    try:
+        # Get form data
+        sender_email = request.form['sender_email']
+        sender_name = request.form['sender_name']
+        app_password = request.form['app_password']
+        receiver_emails = request.form['receiver_email']
+        subject = request.form['subject']
+        message = request.form['message']
+        
+        # Validate required fields
+        if not all([sender_email, sender_name, app_password, receiver_emails, subject, message]):
+            return jsonify({'success': False, 'message': 'All fields are required!'})
+        
+        # Process multiple emails
+        email_list = [email.strip() for email in receiver_emails.split(',') if email.strip()]
+        email_list = email_list[:30]  # Maximum 30 emails
+        
+        if len(email_list) == 0:
+            return jsonify({'success': False, 'message': 'Please enter at least one valid email address!'})
+        
+        results = []
+        successful_count = 0
+        
+        for i, receiver_email in enumerate(email_list):
+            # Add delay to avoid spam detection
+            if i > 0:
+                time.sleep(2)  # 2 second delay between emails
+            
+            success, msg = send_single_email(
+                sender_email, sender_name, app_password, 
+                receiver_email, subject, message
+            )
+            
+            if success:
+                successful_count += 1
+                results.append(f"✅ {receiver_email}: Sent successfully")
+            else:
+                results.append(f"❌ {receiver_email}: Failed - {msg}")
+        
+        # Log the activity
+        app.logger.info(f"Bulk email sent from {sender_name} - {successful_count}/{len(email_list)} successful")
         
         return jsonify({
             'success': True, 
-            'message': '✅ Email successfully sent! Receiver ko professional format mein dikhega.',
-            'sender_name': sender_name
+            'message': f'✅ {successful_count}/{len(email_list)} emails sent successfully!',
+            'details': results,
+            'total_sent': successful_count,
+            'total_attempted': len(email_list)
         })
         
-    except smtplib.SMTPAuthenticationError:
-        return jsonify({
-            'success': False, 
-            'message': '❌ Authentication failed! Check your email and app password.'
-        })
-    except smtplib.SMTPRecipientsRefused:
-        return jsonify({
-            'success': False,
-            'message': '❌ Receiver email invalid hai! Sahi email address dalen.'
-        })
     except Exception as e:
         app.logger.error(f"Email sending error: {str(e)}")
         return jsonify({
