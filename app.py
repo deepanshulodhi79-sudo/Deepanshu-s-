@@ -24,24 +24,19 @@ HARDCODED_CREDENTIALS = {
 # Professional email templates
 PROFESSIONAL_TEMPLATES = {
     'business': {
-        'subject': "Business Update and Collaboration",
-        'greeting': "Dear Team,",
-        'closing': "Best Regards"
+        'subject': "Website Feedback",
+        'greeting': "Hello,",
+        'closing': "Best regards"
     },
-    'meeting': {
-        'subject': "Meeting Agenda and Discussion Points", 
-        'greeting': "Hello Team,",
-        'closing': "Looking forward to our discussion"
+    'technical': {
+        'subject': "Technical Observation", 
+        'greeting': "Hi there,",
+        'closing': "Looking forward to your response"
     },
-    'update': {
-        'subject': "Project Update and Progress Report",
-        'greeting': "Dear Colleagues,",
-        'closing': "Thank you for your cooperation"
-    },
-    'information': {
-        'subject': "Important Information Sharing",
-        'greeting': "Hello Everyone,",
-        'closing': "Best Regards"
+    'collaboration': {
+        'subject': "Quick Question",
+        'greeting': "Hi,",
+        'closing': "Thanks"
     }
 }
 
@@ -87,45 +82,29 @@ def dashboard():
     return render_template('dashboard.html', username=session.get('username'))
 
 def is_valid_email(email):
-    """Enhanced email validation without DNS"""
+    """Email validation check"""
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    if not re.match(pattern, email):
-        return False
+    return re.match(pattern, email) is not None
+
+def create_natural_email(sender_name, message):
+    """Create natural, conversational email content"""
+    # Remove bullet points and make it conversational
+    clean_message = message.replace('•', '').replace('  ', ' ').strip()
     
-    # Common disposable email domains (basic check)
-    disposable_domains = [
-        'tempmail.com', 'throwaway.com', 'fake.com', 'trashmail.com',
-        'guerrillamail.com', 'mailinator.com', 'yopmail.com'
-    ]
-    
-    domain = email.split('@')[1].lower()
-    if domain in disposable_domains:
-        return False
-        
-    return True
+    email_content = f"""Hi,
 
-def create_professional_email(sender_name, sender_email, message, template_type='business'):
-    """Create professional email content"""
-    template = PROFESSIONAL_TEMPLATES[template_type]
-    
-    email_content = f"""{template['greeting']}
+{clean_message}
 
-I hope this message finds you well.
+Would it be okay if I share a screenshot with you via email?
 
-{message}
-
-Thank you for your time and consideration.
-
-{template['closing']},
-{sender_name}
-{sender_email}"""
+Thanks,
+{sender_name}"""
     
     return email_content
 
-def send_single_email(sender_email, sender_name, app_password, receiver_email, subject, message, template_type='business'):
-    """Single email send karne ka function with enterprise-level headers"""
+def send_single_email(sender_email, sender_name, app_password, receiver_email, subject, message):
+    """Single email send karne ka function with natural language"""
     try:
-        # Use different SMTP ports
         smtp_server = "smtp.gmail.com"
         port = 587
         
@@ -135,51 +114,37 @@ def send_single_email(sender_email, sender_name, app_password, receiver_email, s
         msg['To'] = receiver_email
         msg['Subject'] = Header(subject, 'utf-8').encode()
         
-        # ENTERPRISE LEVEL ANTI-SPAM HEADERS
+        # Natural headers
         msg['Reply-To'] = sender_email
-        msg['Return-Path'] = sender_email
-        msg['X-Mailer'] = 'Microsoft Office Outlook 16.0'
-        msg['X-Priority'] = '3'
-        msg['X-MSMail-Priority'] = 'Normal'
-        msg['Importance'] = 'Normal'
+        msg['X-Mailer'] = 'Microsoft Outlook'
         msg['MIME-Version'] = '1.0'
         msg['Content-Type'] = 'text/plain; charset="utf-8"'
-        msg['Content-Transfer-Encoding'] = '8bit'
         
-        # Professional email body
-        professional_body = create_professional_email(sender_name, sender_email, message, template_type)
-        msg.attach(MIMEText(professional_body, 'plain', 'utf-8'))
+        # Natural email body
+        natural_body = create_natural_email(sender_name, message)
+        msg.attach(MIMEText(natural_body, 'plain', 'utf-8'))
         
-        # SMTP connection with proper timeout
+        # SMTP connection
         server = smtplib.SMTP(smtp_server, port, timeout=30)
-        server.set_debuglevel(0)  # No debug output
-        
-        # Extended EHLO
         server.ehlo()
         server.starttls()
         server.ehlo()
-        
-        # Login with retry
         server.login(sender_email, app_password)
         
-        # Send with proper envelope
+        # Send email
         server.sendmail(sender_email, [receiver_email], msg.as_string())
         server.quit()
         
-        return True, "Email delivered successfully"
+        return True, "Email sent successfully"
         
     except smtplib.SMTPDataError as e:
-        if "Daily sending limit exceeded" in str(e):
-            return False, "Daily sending limit exceeded. Try again tomorrow."
-        return False, f"SMTP Error: {str(e)}"
+        return False, "Daily limit exceeded. Try again tomorrow."
     except smtplib.SMTPRecipientsRefused:
-        return False, "Recipient email rejected"
-    except smtplib.SMTPSenderRefused:
-        return False, "Sender email not authorized"
+        return False, "Invalid email address"
     except smtplib.SMTPAuthenticationError:
         return False, "Authentication failed - check app password"
     except Exception as e:
-        return False, f"Delivery failed: {str(e)}"
+        return False, f"Failed to send: {str(e)}"
 
 @app.route('/send_email', methods=['POST'])
 @login_required
@@ -192,15 +157,14 @@ def send_email():
         receiver_emails = request.form['receiver_email']
         subject = request.form['subject']
         message = request.form['message']
-        template_type = request.form.get('template_type', 'business')
         
         # Validate required fields
         if not all([sender_email, sender_name, app_password, receiver_emails, subject, message]):
             return jsonify({'success': False, 'message': 'All fields are required!'})
         
-        # Validate sender email format
+        # Validate sender email
         if not is_valid_email(sender_email):
-            return jsonify({'success': False, 'message': 'Please use a valid sender email address'})
+            return jsonify({'success': False, 'message': 'Please use a valid sender email'})
         
         # Process receiver emails
         email_list = []
@@ -214,48 +178,36 @@ def send_email():
         
         # Validate and limit emails
         valid_emails = [email for email in email_list if is_valid_email(email)]
-        valid_emails = valid_emails[:8]  # Reduced for safety
+        valid_emails = valid_emails[:5]  # Small batch for testing
         
         if len(valid_emails) == 0:
             return jsonify({'success': False, 'message': 'No valid email addresses found!'})
         
-        # Use professional template subject
-        professional_subject = PROFESSIONAL_TEMPLATES[template_type]['subject']
-        if subject != professional_subject:
-            subject = f"{professional_subject}: {subject}"
-        
         results = []
         successful_count = 0
         
-        # Send emails with progressive delays
+        # Send emails
         for i, receiver_email in enumerate(valid_emails):
-            # Progressive delay: 15-20 seconds between emails
+            # Small delay between emails
             if i > 0:
-                delay = random.randint(15, 20)
-                time.sleep(delay)
+                time.sleep(5)
             
             success, msg = send_single_email(
                 sender_email, sender_name, app_password, 
-                receiver_email, subject, message, template_type
+                receiver_email, subject, message
             )
             
             if success:
                 successful_count += 1
-                results.append(f"✅ {receiver_email}: Delivered to inbox")
+                results.append(f"✅ {receiver_email}: Sent")
             else:
                 results.append(f"❌ {receiver_email}: {msg}")
-            
-            # Break if too many failures
-            if i >= 3 and successful_count == 0:
-                results.append("⚠️ Stopping: Multiple consecutive failures detected")
-                break
         
-        # Calculate success rate
         success_rate = (successful_count / len(valid_emails)) * 100 if valid_emails else 0
         
         return jsonify({
-            'success': True if successful_count > 0 else False, 
-            'message': f'📨 {successful_count}/{len(valid_emails)} emails delivered ({success_rate:.1f}% success rate)',
+            'success': successful_count > 0, 
+            'message': f'📨 {successful_count}/{len(valid_emails)} emails sent',
             'details': results,
             'total_sent': successful_count,
             'total_attempted': len(valid_emails),
@@ -263,16 +215,14 @@ def send_email():
         })
         
     except Exception as e:
-        app.logger.error(f"Email sending error: {str(e)}")
         return jsonify({
             'success': False, 
-            'message': f'❌ System error: Please try again later'
+            'message': f'Error: Please try again'
         })
 
 @app.route('/api/templates')
 @login_required
 def get_templates():
-    """Get available email templates"""
     return jsonify({'templates': PROFESSIONAL_TEMPLATES})
 
 @app.route('/api/health')
