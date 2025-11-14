@@ -1,218 +1,135 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mailer Dashboard Pro</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mail Sender — Simple Dashboard</title>
+
     <style>
-        :root {
-            --bg: #f4f5f9;
-            --card: #ffffff;
-            --text: #111;
-            --primary: #4f46e5;
-            --success: #16a34a;
-            --danger: #dc2626;
-        }
-        .dark {
-            --bg: #0f0f10;
-            --card: #1a1a1c;
-            --text: #e5e5e5;
-        }
         body {
             font-family: Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            background: #f4f4f4;
             margin: 0;
             padding: 0;
         }
-        .nav {
-            padding: 18px 25px;
-            background: var(--card);
-            display: flex;
-            justify-content: space-between;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-        }
         .container {
-            width: 92%;
-            margin: auto;
-            padding-top: 25px;
+            max-width: 700px;
+            margin: 40px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .card {
-            background: var(--card);
-            padding: 22px;
-            border-radius: 14px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.12);
-            margin-bottom: 22px;
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
         }
         input, textarea {
             width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid #9993;
-            background: var(--bg);
-            color: var(--text);
-            margin-top: 8px;
-        }
-        button {
-            background: var(--primary);
-            color: white;
-            padding: 12px 22px;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
             font-size: 15px;
         }
-        button:disabled {
-            opacity: .5;
+        textarea {
+            height: 110px;
         }
-        .stats {
-            display: flex;
-            gap: 18px;
-        }
-        .statbox {
-            flex: 1;
-            background: var(--card);
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-        }
-        .loader {
-            border: 4px solid #ddd;
-            border-top: 4px solid var(--primary);
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: auto;
-            display: none;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%,-50%);
-            background: var(--card);
-            padding: 25px 35px;
-            border-radius: 14px;
-            box-shadow: 0 0 40px rgba(0,0,0,0.3);
-            display: none;
-        }
-        .toggle-btn {
-            background: none;
-            border: 1px solid var(--text);
-            padding: 8px 15px;
-            border-radius: 8px;
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            margin-top: 15px;
+            font-size: 17px;
+            border-radius: 6px;
             cursor: pointer;
-            color: var(--text);
+        }
+        button:disabled {
+            background: #888;
+        }
+        #statusBox {
+            margin-top: 20px;
+            padding: 12px;
+            background: #e8f7e2;
+            border-left: 4px solid #4CAF50;
+            display: none;
+        }
+        .logout {
+            text-align: right;
+            margin-top: -20px;
+        }
+        .logout a {
+            color: red;
+            text-decoration: none;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <div class="nav">
-        <h2>Mailer Pro Dashboard</h2>
-        <button class="toggle-btn" onclick="toggleTheme()">Toggle Dark</button>
+<div class="container">
+
+    <div class="logout">
+        <a href="/logout">Logout</a>
     </div>
 
-    <div class="container">
+    <h2>Simple Bulk Mail Sender</h2>
 
-        <!-- STATS -->
-        <div class="stats">
-            <div class="statbox">
-                <h3>Sent Today</h3>
-                <h1 id="sentToday">0</h1>
-            </div>
-            <div class="statbox">
-                <h3>Daily Limit</h3>
-                <h1>150</h1>
-            </div>
-            <div class="statbox">
-                <h3>Gmail Status</h3>
-                <h1 id="gmailStatus">Checking...</h1>
-            </div>
-        </div>
+    <label>Sender Name</label>
+    <input id="sender_name" placeholder="John Doe" />
 
-        <!-- FORM -->
-        <div class="card">
-            <h2>Send Emails</h2>
+    <label>Your Gmail</label>
+    <input id="sender_email" placeholder="example@gmail.com" />
 
-            <label>Your Name:</label>
-            <input type="text" id="sender_name">
+    <label>App Password</label>
+    <input id="sender_pass" type="password" placeholder="16-digit app password" />
 
-            <label>Your Gmail:</label>
-            <input type="email" id="sender_email">
+    <label>Recipients (line-by-line)</label>
+    <textarea id="recipients" placeholder="email1@example.com
+email2@example.com"></textarea>
 
-            <label>App Password:</label>
-            <input type="password" id="sender_pass">
+    <button id="sendBtn" onclick="sendMail()">Send Emails</button>
 
-            <label>Recipients (one per line):</label>
-            <textarea id="recipients" rows="6"></textarea>
+    <div id="statusBox"></div>
 
-            <br><br>
-
-            <button id="sendBtn" onclick="sendNow()">Send Emails</button>
-
-            <div class="loader" id="loader"></div>
-        </div>
-
-    </div>
-
-    <!-- SUCCESS POPUP -->
-    <div class="popup" id="popup">
-        <h2>Emails Sent Successfully!</h2>
-        <p id="popupText"></p>
-        <br>
-        <button onclick="hidePopup()">OK</button>
-    </div>
+</div>
 
 <script>
-function toggleTheme() {
-    document.documentElement.classList.toggle('dark');
-}
-
-function fakeGmailCheck() {
-    setTimeout(() => {
-        document.getElementById("gmailStatus").innerText = "Active";
-    }, 1500);
-}
-fakeGmailCheck();
-
-function sendNow() {
+function sendMail() {
     let btn = document.getElementById("sendBtn");
-    let loader = document.getElementById("loader");
-
     btn.disabled = true;
-    loader.style.display = "block";
     btn.innerText = "Sending...";
 
-    fetch('/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            sender_name: document.getElementById('sender_name').value,
-            sender_email: document.getElementById('sender_email').value,
-            sender_pass: document.getElementById('sender_pass').value,
-            recipients: document.getElementById('recipients').value
-        })
+    fetch("/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body:
+            "sender_name=" + encodeURIComponent(sender_name.value) +
+            "&sender_email=" + encodeURIComponent(sender_email.value) +
+            "&sender_pass=" + encodeURIComponent(sender_pass.value) +
+            "&recipients=" + encodeURIComponent(recipients.value)
     })
     .then(res => res.json())
     .then(data => {
-        loader.style.display = "none";
+        let box = document.getElementById("statusBox");
+        box.style.display = "block";
+        box.innerHTML = `<b>Total:</b> ${data.total} | <b>Sent:</b> ${data.success} | <b>Failed:</b> ${data.failed}`;
+
         btn.disabled = false;
         btn.innerText = "Send Emails";
-
-        document.getElementById("sentToday").innerText = data.success;
-        document.getElementById("popupText").innerText = data.success + " sent, " + data.failed + " failed";
-        document.getElementById("popup").style.display = "block";
+    })
+    .catch(err => {
+        alert("Error sending emails");
+        btn.disabled = false;
+        btn.innerText = "Send Emails";
     });
-}
-
-function hidePopup() {
-    document.getElementById("popup").style.display = "none";
 }
 </script>
 
