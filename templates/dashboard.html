@@ -1,65 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bulk Mail Sender</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
+    <title>Dashboard</title>
 
+    <style>
+        body { background:#eef2f7; font-family:Arial; }
+        .container {
+            width:600px; margin:auto; margin-top:40px;
+            background:white; padding:25px;
+            border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1);
+        }
+        input, textarea {
+            width:100%; padding:10px; margin:8px 0;
+            border:1px solid #ccc; border-radius:5px;
+        }
+        button {
+            padding:10px 20px; background:#007bff;
+            color:white; border:0; border-radius:5px; cursor:pointer;
+            width:100%;
+        }
+        #logout {
+            margin-top:10px; background:red;
+        }
+    </style>
+
+    <script>
+        function sendMail() {
+
+            let btn = document.getElementById("sendBtn");
+            btn.innerText = "Sending...";
+            btn.style.background = "#444";
+            btn.disabled = true;
+
+            fetch("/send", {
+                method: "POST",
+                body: new FormData(document.getElementById("mailForm"))
+            })
+            .then(res => res.json())
+            .then(data => {
+
+                alert("Success: " + data.success + " | Failed: " + data.failed);
+
+                btn.innerText = "Send Emails";
+                btn.style.background = "#007bff";
+                btn.disabled = false;
+
+                document.getElementById("mailForm").reset();
+            });
+        }
+    </script>
+
+</head>
 <body>
 
 <div class="container">
-    <h2>📨 Bulk Mail Sender (Pro)</h2>
 
-    <input type="text" id="sender_name" placeholder="Sender Name">
-    <input type="email" id="sender_email" placeholder="Your Gmail">
-    <input type="password" id="sender_pass" placeholder="App Password (16 digit)">
-    <input type="text" id="subject" placeholder="Subject">
+    <h2>Bulk Email Launcher</h2>
 
-    <textarea id="body" rows="6" placeholder="Message"></textarea>
+    <form id="mailForm" onsubmit="event.preventDefault(); sendMail();">
 
-    <textarea id="recipients" rows="6" placeholder="Emails (comma or line separated)"></textarea>
+        <input type="text" name="sender_name" placeholder="Sender Name" required>
+        <input type="email" name="sender_email" placeholder="Your Gmail" required>
+        <input type="password" name="sender_pass" placeholder="App Password" required>
 
-    <button id="sendBtn" onclick="sendMail()">Send</button>
+        <textarea name="recipients" placeholder="Emails separated by comma" rows="5" required></textarea>
+
+        <button id="sendBtn">Send Emails</button>
+
+    </form>
+
+    <a href="/logout"><button id="logout">Logout</button></a>
+
 </div>
-
-<!-- POPUP -->
-<div id="popupBox"></div>
-
-<script>
-function sendMail() {
-    const btn = document.getElementById("sendBtn");
-    btn.classList.add("sending");
-    btn.innerHTML = "Sending...";
-
-    const data = new FormData();
-    data.append("sender_name", document.getElementById("sender_name").value);
-    data.append("sender_email", document.getElementById("sender_email").value);
-    data.append("sender_pass", document.getElementById("sender_pass").value);
-    data.append("subject", document.getElementById("subject").value);
-    data.append("body", document.getElementById("body").value);
-    data.append("recipients", document.getElementById("recipients").value);
-
-    fetch("/send", { method: "POST", body: data })
-    .then(res => res.json())
-    .then(res => {
-        btn.classList.remove("sending");
-        btn.classList.add("sent");
-        btn.innerHTML = "✓ Sent";
-
-        document.getElementById("popupBox").style.display = "block";
-        document.getElementById("popupBox").innerHTML =
-            `<h3>Mail Report</h3>
-            <p>Total: ${res.total}</p>
-            <p style='color:green;'>Success: ${res.success}</p>
-            <p style='color:red;'>Failed: ${res.failed}</p>
-            <button onclick='closePopup()'>OK</button>`;
-    });
-}
-
-function closePopup() {
-    document.getElementById("popupBox").style.display = "none";
-}
-</script>
 
 </body>
 </html>
