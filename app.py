@@ -89,8 +89,9 @@ def send_email():
     sender_pass  = request.form['sender_pass']
     recipients   = request.form['recipients']
 
-    # Convert comma list to array
-    recipients_list = [i.strip() for i in recipients.split(",") if i.strip()]
+   # Support: line-by-line, comma, mixed format
+raw_list = recipients.replace("\r", "").replace("\n", ",")
+recipients_list = [i.strip() for i in raw_list.split(",") if i.strip()]
 
     success = 0
     fail = 0
