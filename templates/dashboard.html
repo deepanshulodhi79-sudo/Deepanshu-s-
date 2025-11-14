@@ -1,31 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fast Mail Launcher</title>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-  <div class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-3xl">
-    <h2 class="text-2xl font-bold text-center mb-6 text-blue-600">📩 Fast Mail Launcher</h2>
-
-    <form id="mailForm" class="grid grid-cols-2 gap-4">
-      <input type="text" name="sender_name" placeholder="Sender Name" required class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-300">
-      <input type="email" name="sender_email" placeholder="Your Gmail" required class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-300">
-      <input type="password" name="sender_pass" placeholder="App Password" required class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-300">
-      <input type="text" name="subject" placeholder="Subject" required class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-300">
-      <textarea name="body" placeholder="Message Body" rows="6" required class="border rounded-lg p-2 col-span-1 focus:ring-2 focus:ring-blue-300"></textarea>
-      <textarea name="recipients" placeholder="Recipients (comma or newline)" rows="6" required class="border rounded-lg p-2 col-span-1 focus:ring-2 focus:ring-blue-300"></textarea>
-
-      <button id="sendBtn" type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg col-span-1 transition-all duration-300">Send All</button>
-      <a href="/logout" class="bg-gray-400 hover:bg-gray-500 text-white text-center font-bold py-2 rounded-lg col-span-1">Logout</a>
-    </form>
-  </div>
-
-  <script>
+<script>
     const form = document.getElementById('mailForm');
     const sendBtn = document.getElementById('sendBtn');
 
@@ -45,24 +18,26 @@
         const result = await response.json();
 
         Swal.fire({
-          title: '✅ Mail Processed!',
+          title: '✅ Mail Sent!',
           html: `
             <b>Total:</b> ${result.total}<br>
             <b>Success:</b> ${result.success}<br>
-            <b>Failed:</b> ${result.failed}
+            <b>Failed:</b> ${result.failed}<br><br>
+            <span style='color:green;font-weight:bold;'>Your filled details are not cleared.</span>
           `,
           icon: 'success',
           confirmButtonText: 'OK'
         });
 
-        // Reset form (without page reload)
-        form.reset();
+        // ❌ ❌ NO RESET NOW
+        // form.reset();  ← ye hata diya
+
       } catch (error) {
         Swal.fire({
           title: '❌ Error!',
           text: 'Something went wrong while sending mails.',
           icon: 'error',
-          confirmButtonText: 'Try Again'
+          confirmButtonText: 'Retry'
         });
       }
 
@@ -72,6 +47,4 @@
       sendBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
       sendBtn.classList.add("bg-blue-500", "hover:bg-blue-600");
     });
-  </script>
-</body>
-</html>
+</script>
