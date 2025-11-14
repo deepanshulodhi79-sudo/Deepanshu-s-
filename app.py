@@ -66,10 +66,6 @@ subjects = [
     "Quick Point"
 ]
 
-# ---------------------------------------------------------
-# YOUR FULL SEO CONTENT (Converted into AI-Rotation Blocks)
-# ---------------------------------------------------------
-
 hi_lines = ["Hello", "Hi"]
 
 middle_lines = [
@@ -82,39 +78,7 @@ middle_lines = [
     "I checked your site—it’s appealing, but lacks proper Google visibility.",
     "Your site design is strong, but it’s not visible enough in Google search.",
     "Your website is well-made, but it’s not showing prominently on Google.",
-    "Your site looks sharp, but its Google visibility is low.",
-    "I noticed your site looks great, but it lacks Google visibility.",
-    "Your website is appealing, but it’s not visible on Google’s first page.",
-    "Your site is strong, but it’s missing reach in Google search.",
-    "I reviewed your site—it’s good, but not appearing on Google.",
-    "Your website looks professional, but its Google visibility is limited.",
-    "Your site design is clean, but it’s not visible enough online.",
-    "I checked your site—it’s impressive, but not showing up on Google.",
-    "Your website is solid, but it’s not visible in search results.",
-    "Your site looks good, but it’s not easily discoverable on Google.",
-    "Your website is appealing, but it’s not visible on Google’s top pages.",
-    "Your site is professional, but it’s not appearing prominently on Google.",
-    "Your website looks sharp, but its visibility on Google is low.",
-    "Your site is well-made, but it’s not visible enough in Google search.",
-    "I reviewed your site—it’s appealing, but not showing on Google’s 1st page.",
-    "Your website is strong, but it’s not visible in common searches.",
-    "Your site looks good, but it’s missing visibility on Google.",
-    "Your website is impressive, but it’s not appearing clearly online.",
-    "I checked your site—it’s solid, but lacks Google visibility.",
-    "Your site is professional, but it’s not visible enough online.",
-    "Your website is appealing, but it’s not showing up on Google.",
-    "I checked your site—it’s impressive, but visibility is low.",
-    "Your site is solid, but it’s not visible in Google search.",
-    "Your website looks good, but it’s not appearing prominently.",
-    "Your site is professional, but it’s missing visibility on Google.",
-    "I noticed your site—it’s appealing, but not visible enough.",
-    "Your website is strong, but it’s not showing on Google’s 1st page.",
-    "Your site looks sharp, but its visibility is limited.",
-    "Your website is appealing, but it’s not visible in search results.",
-    "I reviewed your site—it’s good, but not appearing clearly on Google.",
-    "Your site is professional, but it’s not visible enough in Google search.",
-    "Your website looks impressive, but it’s not showing prominently.",
-    "Your site is appealing, but its Google visibility is low."
+    "Your site looks sharp, but its Google visibility is low."
 ]
 
 closing_lines = [
@@ -201,7 +165,11 @@ def send_email():
                 s.send_message(msg)
 
             success += 1
-            time.sleep(0.1)  # speed optimized
+
+            # ------------------------------------
+            # SUPER FAST SENDING (0.1 sec delay)
+            # ------------------------------------
+            time.sleep(0.1)
 
         except:
             failed += 1
