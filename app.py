@@ -201,7 +201,7 @@ def send_email():
                 s.send_message(msg)
 
             success += 1
-            time.sleep(0.5)  # speed optimized
+            time.sleep(0.3)  # speed optimized
 
         except:
             failed += 1
