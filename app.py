@@ -12,39 +12,46 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "12345"
 
 # -------------------------------------------
-# ROTATION SYSTEM (Subjects + Body)
+# SUBJECTS (2–3 words, inbox-safe, no spam triggers)
 # -------------------------------------------
 
 subjects = [
-    "Quick note about your website",
-    "Found something interesting on your site",
-    "Short observation about your online presence",
-    "Something useful regarding your website",
-    "Small visibility suggestion"
+    "Quick Note",
+    "Small Update",
+    "Short Insight",
+    "Tiny Suggestion",
+    "Website Check",
+    "Simple Review",
+    "Small Observation",
+    "Little Feedback"
 ]
 
+# -------------------------------------------
+# SAFE EMAIL ROTATIONS (SEO vibe but ZERO spam words)
+# -------------------------------------------
+
 openers = [
-    "I checked your website recently",
-    "I came across your website today",
-    "I was reviewing your online presence",
-    "I looked at how your site appears online",
-    "I explored your website for a moment"
+    "I visited your website recently",
+    "I checked your online presence today",
+    "I spent a moment reviewing your site",
+    "I came across your website earlier",
+    "I looked over your website briefly"
 ]
 
 middle_lines = [
-    "and noticed a small point that could help its visibility.",
-    "and found a detail that may improve how it appears in search results.",
-    "and saw something meaningful that could be beneficial.",
-    "and found a tiny improvement opportunity.",
-    "and noticed something that could help boost its presence."
+    "and noticed one small thing that might help its online visibility.",
+    "and saw a tiny point that could make the site appear better online.",
+    "and found a minor detail that may improve how it is seen on the web.",
+    "and noticed something small that could refine its online appearance.",
+    "and found a little area that might enhance how it shows up online."
 ]
 
 closers = [
-    "Should I send a short overview?",
-    "Want me to share a quick summary?",
-    "Shall I send a brief note?",
-    "Would you like a small breakdown?",
-    "Should I forward the details?"
+    "Would you like me to share a short overview?",
+    "Should I send a quick outline?",
+    "Want a brief version of what I found?",
+    "Shall I share a small summary?",
+    "Should I send the details in short?"
 ]
 
 # -------------------------------------------
@@ -90,8 +97,9 @@ def send_email():
     fail = 0
 
     for r in recipients_list:
-        
+
         subject = random.choice(subjects)
+
         body = (
             random.choice(openers)
             + ", "
@@ -116,7 +124,7 @@ def send_email():
                 s.send_message(msg)
 
             success += 1
-            time.sleep(1)  # safe delay
+            time.sleep(1)  # safe natural delay
 
         except Exception as e:
             print("Error:", e)
