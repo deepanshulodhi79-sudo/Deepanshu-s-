@@ -11,9 +11,8 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "default_secret")
 
-# 🔐 Hardcoded login credentials
 ADMIN_USER = "admin"
-ADMIN_PASS = "12345"  # change as needed
+ADMIN_PASS = "12345"
 
 @app.route('/')
 def home():
@@ -21,24 +20,21 @@ def home():
         return redirect('/launcher')
     return redirect('/login')
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        if username == ADMIN_USER and password == ADMIN_PASS:
+        if request.form['username'] == ADMIN_USER and request.form['password'] == ADMIN_PASS:
             session['logged_in'] = True
             return redirect('/launcher')
-        else:
-            return render_template('login.html', message="Invalid username or password")
+        return render_template('login.html', message="❌ Wrong Username or Password")
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
-    session.pop('logged_in', None)
+    session.clear()
     return redirect('/login')
 
-@app.route('/launcher', methods=['GET'])
+@app.route('/launcher')
 def launcher():
     if 'logged_in' not in session:
         return redirect('/login')
@@ -53,47 +49,36 @@ def send_email():
     body = request.form['body']
     recipients = request.form['recipients']
 
-    recipients_list = [r.strip() for r in recipients.replace("\n", ",").split(",") if r.strip()]
-    success = 0
-    failed = 0
+    recipients_list = [x.strip() for x in recipients.replace("\n", ",").split(",") if x.strip()]
+    success, failed = 0, 0
 
     for to_email in recipients_list:
         try:
-            # SPAM SAFE EMAIL FORMAT
             msg = MIMEMultipart()
             msg['From'] = f"{sender_name} <{sender_email}>"
             msg['To'] = to_email
-            msg['Subject'] = subject.encode('utf-8').decode()
+            msg['Subject'] = subject
             msg['Reply-To'] = sender_email
             msg['Message-ID'] = make_msgid()
             msg['Date'] = formatdate(localtime=True)
-            msg['Content-Language'] = 'en-US'
-
-            # Plain text body
             msg.attach(MIMEText(body, 'plain', 'utf-8'))
 
-            # Gmail SMTP (anti-spam optimized)
-            with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                server.ehlo()
+            with smtplib.SMTP("smtp.gmail.com", 587) as server:
                 server.starttls()
-                server.ehlo()
                 server.login(sender_email, sender_pass)
                 server.send_message(msg)
 
             success += 1
+            time.sleep(1.5)
 
-            # BEST anti-spam delay
-            time.sleep(2)
-
-        except Exception as e:
-            print(f"Failed to send to {to_email}: {e}")
+        except:
             failed += 1
 
     return jsonify({
+        "total": len(recipients_list),
         "success": success,
-        "failed": failed,
-        "total": len(recipients_list)
+        "failed": failed
     })
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(host='0.0.0.0', port=10000)
