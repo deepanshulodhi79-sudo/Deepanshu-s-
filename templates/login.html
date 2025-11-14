@@ -1,34 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Fast Mail Launcher</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Login</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-  <div class="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-sm text-center">
-    <h2 class="text-2xl font-bold mb-6 text-gray-700">🔐 Fast Mail Launcher</h2>
 
-    <form method="POST" action="/login" class="flex flex-col gap-4">
-      <input type="text" name="username" placeholder="Username" required class="border rounded-lg p-2">
-      <input type="password" name="password" placeholder="Password" required class="border rounded-lg p-2">
-      <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg">
-        Login
-      </button>
+<body>
+<div class="container">
+    <h2>🔐 Admin Login</h2>
+    {% if message %}
+    <p style="color:red;">{{ message }}</p>
+    {% endif %}
+
+    <form method="POST">
+        <input type="text" name="username" placeholder="Enter Username" required>
+        <input type="password" name="password" placeholder="Enter Password" required>
+        <button type="submit">Login</button>
     </form>
-  </div>
-
-  {% if message %}
-  <script>
-    Swal.fire({
-      icon: 'error',
-      title: 'Login Failed',
-      text: '{{ message }}',
-      confirmButtonText: 'Try Again'
-    });
-  </script>
-  {% endif %}
+</div>
 </body>
 </html>
