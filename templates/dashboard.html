@@ -39,13 +39,17 @@
             .then(res => res.json())
             .then(data => {
 
-                alert("Success: " + data.success + " | Failed: " + data.failed);
+                alert(
+                    "Total: " + data.total +
+                    " | Success: " + data.success +
+                    " | Failed: " + data.failed
+                );
 
                 btn.innerText = "Send Emails";
                 btn.style.background = "#007bff";
                 btn.disabled = false;
 
-                document.getElementById("mailForm").reset();
+                // ❌ NO RESET — fields stay filled
             });
         }
     </script>
@@ -63,7 +67,7 @@
         <input type="email" name="sender_email" placeholder="Your Gmail" required>
         <input type="password" name="sender_pass" placeholder="App Password" required>
 
-        <textarea name="recipients" placeholder="Emails separated by comma" rows="5" required></textarea>
+        <textarea name="recipients" placeholder="Email IDs separated by comma" rows="5" required></textarea>
 
         <button id="sendBtn">Send Emails</button>
 
