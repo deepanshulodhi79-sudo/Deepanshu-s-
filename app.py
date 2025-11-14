@@ -6,52 +6,46 @@ from email.utils import formatdate, make_msgid
 import os, time, random
 
 app = Flask(__name__)
-app.secret_key = "SUPERSECRET123"   # Change on Render ENV
+app.secret_key = "SUPERSECRET123"
 
 ADMIN_USER = "admin"
 ADMIN_PASS = "12345"
 
 # -------------------------------------------
-# SUBJECTS (2–3 words, inbox-safe, no spam triggers)
+# SUBJECTS (Inbox-safe)
 # -------------------------------------------
-
 subjects = [
     "Quick Note",
     "Small Update",
     "Short Insight",
-    "Tiny Suggestion",
     "Website Check",
     "Simple Review",
-    "Small Observation",
     "Little Feedback"
 ]
 
 # -------------------------------------------
-# SAFE EMAIL ROTATIONS (SEO vibe but ZERO spam words)
+# SAFE ROTATION—SEO feel but spam-proof
 # -------------------------------------------
-
 openers = [
-    "I visited your website recently",
-    "I checked your online presence today",
-    "I spent a moment reviewing your site",
-    "I came across your website earlier",
-    "I looked over your website briefly"
+    "I checked your website today",
+    "I had a look at your online presence",
+    "I reviewed your website briefly",
+    "I came across your site recently",
+    "I visited your website earlier"
 ]
 
 middle_lines = [
-    "and noticed one small thing that might help its online visibility.",
-    "and saw a tiny point that could make the site appear better online.",
-    "and found a minor detail that may improve how it is seen on the web.",
-    "and noticed something small that could refine its online appearance.",
-    "and found a little area that might enhance how it shows up online."
+    "and noticed a small area that might help its online visibility.",
+    "and found a tiny detail that may improve its appearance online.",
+    "and noticed one minor thing that could refine the online look.",
+    "and saw something small that may enhance how it is seen online."
 ]
 
 closers = [
-    "Would you like me to share a short overview?",
-    "Should I send a quick outline?",
+    "Would you like a short overview?",
+    "Should I share a quick outline?",
     "Want a brief version of what I found?",
-    "Shall I share a small summary?",
-    "Should I send the details in short?"
+    "Shall I send a small summary?",
 ]
 
 # -------------------------------------------
@@ -61,6 +55,7 @@ def home():
     if 'logged_in' in session:
         return redirect('/dashboard')
     return redirect('/login')
+
 
 @app.route('/login', methods=['GET','POST'])
 def login():
@@ -73,16 +68,19 @@ def login():
         return render_template("login.html", message="Invalid credentials")
     return render_template("login.html")
 
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/login')
+
 
 @app.route('/dashboard')
 def dashboard():
     if 'logged_in' not in session:
         return redirect('/login')
     return render_template("dashboard.html")
+
 
 @app.route('/send', methods=['POST'])
 def send_email():
@@ -91,12 +89,17 @@ def send_email():
     sender_pass  = request.form['sender_pass']
     recipients   = request.form['recipients']
 
+    # Convert comma list to array
     recipients_list = [i.strip() for i in recipients.split(",") if i.strip()]
 
     success = 0
     fail = 0
 
-    for r in recipients_list:
+    # Gmail limit safe: 30 per batch
+    MAX_BATCH = 30
+    selected_recipients = recipients_list[:MAX_BATCH]
+
+    for r in selected_recipients:
 
         subject = random.choice(subjects)
 
@@ -124,17 +127,21 @@ def send_email():
                 s.send_message(msg)
 
             success += 1
-            time.sleep(1)  # safe natural delay
 
-        except Exception as e:
-            print("Error:", e)
+            # Natural delay — NOT random (best for inbox)
+            time.sleep(0.8)
+
+        except:
             fail += 1
 
     return jsonify({
-        "total": len(recipients_list),
+        "total_requested": len(recipients_list),
+        "sent_this_batch": len(selected_recipients),
         "success": success,
-        "failed": fail
+        "failed": fail,
+        "status": "completed"
     })
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
