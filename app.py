@@ -1,84 +1,76 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.utils import formatdate, make_msgid
-from dotenv import load_dotenv
-import os, time
+if 'logged_in' not in session:
+return jsonify({'error': 'not-authorized'}), 401
 
-load_dotenv()
 
-app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "default_secret")
+sender_name = request.form.get('sender_name','').strip()
+sender_email = request.form.get('sender_email','').strip()
+sender_pass = request.form.get('sender_pass','').strip()
+subject_input = request.form.get('subject','').strip()
+body_input = request.form.get('body','').strip()
+recipients_raw = request.form.get('recipients','').strip()
 
-ADMIN_USER = "admin"
-ADMIN_PASS = "12345"
 
-@app.route('/')
-def home():
-    if 'logged_in' in session:
-        return redirect('/launcher')
-    return redirect('/login')
+if not sender_email or not sender_pass or not recipients_raw:
+return jsonify({'error':'missing-fields'}), 400
 
-@app.route('/login', methods=['GET','POST'])
-def login():
-    if request.method == 'POST':
-        if request.form['username'] == ADMIN_USER and request.form['password'] == ADMIN_PASS:
-            session['logged_in'] = True
-            return redirect('/launcher')
-        return render_template('login.html', message="❌ Wrong Username or Password")
-    return render_template('login.html')
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect('/login')
+recipients = [r.strip() for r in re.split('[,\n;]+', recipients_raw) if r.strip()]
+recipients = [r for r in recipients if is_valid_email(r)]
 
-@app.route('/launcher')
-def launcher():
-    if 'logged_in' not in session:
-        return redirect('/login')
-    return render_template('dashboard.html')
 
-@app.route('/send', methods=['POST'])
-def send_email():
-    sender_name = request.form['sender_name']
-    sender_email = request.form['sender_email']
-    sender_pass = request.form['sender_pass']
-    subject = request.form['subject']
-    body = request.form['body']
-    recipients = request.form['recipients']
+total = len(recipients)
+success = 0
+failed = 0
+details = []
 
-    recipients_list = [x.strip() for x in recipients.replace("\n", ",").split(",") if x.strip()]
-    success, failed = 0, 0
 
-    for to_email in recipients_list:
-        try:
-            msg = MIMEMultipart()
-            msg['From'] = f"{sender_name} <{sender_email}>"
-            msg['To'] = to_email
-            msg['Subject'] = subject
-            msg['Reply-To'] = sender_email
-            msg['Message-ID'] = make_msgid()
-            msg['Date'] = formatdate(localtime=True)
-            msg.attach(MIMEText(body, 'plain', 'utf-8'))
+# Compose rotated subject/body
+for idx, to_email in enumerate(recipients, start=1):
+subj, body = compose_rotated_message(subject_input, body_input)
 
-            with smtplib.SMTP("smtp.gmail.com", 587) as server:
-                server.starttls()
-                server.login(sender_email, sender_pass)
-                server.send_message(msg)
 
-            success += 1
-            time.sleep(1.5)
+try:
+msg = MIMEMultipart()
+msg['From'] = f"{sender_name} <{sender_email}>" if sender_name else sender_email
+msg['To'] = to_email
+msg['Subject'] = subj
+msg['Reply-To'] = sender_email
+msg['Message-ID'] = make_msgid()
+msg['Date'] = formatdate(localtime=True)
+msg['Content-Language'] = 'en-US'
 
-        except:
-            failed += 1
 
-    return jsonify({
-        "total": len(recipients_list),
-        "success": success,
-        "failed": failed
-    })
+msg.attach(MIMEText(body, 'plain', 'utf-8'))
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=10000)
+
+# fast but safe random delay between 0.8 - 1.2 seconds
+delay = random.uniform(0.8, 1.2)
+
+
+with smtplib.SMTP('smtp.gmail.com', 587, timeout=30) as server:
+server.ehlo()
+server.starttls()
+server.ehlo()
+server.login(sender_email, sender_pass)
+server.send_message(msg)
+
+
+success += 1
+details.append({'email': to_email, 'status': 'sent'})
+
+
+time.sleep(delay)
+
+
+except Exception as e:
+failed += 1
+details.append({'email': to_email, 'status': 'failed', 'error': str(e)})
+
+
+return jsonify({'total': total, 'success': success, 'failed': failed, 'details': details})
+
+
+if __name__ == '__main__':
+port = int(os.environ.get('PORT', 10000))
+app.run(host='0.0.0.0', port=port)
