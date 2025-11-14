@@ -1,250 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dashboard — Fast Mail Launcher (Pro)</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bulk Mail Sender Pro</title>
 
-  <!-- SweetAlert2 -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            background: #f5f6fa;
+            margin: 0;
+            padding: 0;
+        }
 
-  <style>
-    :root{
-      --bg:#071026; --card:#081428; --muted:#9fb0c8; --accent:#1976ff;
-      --good:#2ecc71; --warn:#ffb545; --white:#e6eef8;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; font-family:Inter,Arial,Helvetica,sans-serif;
-      background:linear-gradient(180deg,#071026 0%, #0d1830 100%); color:var(--white);
-      padding:28px;
-    }
-    .wrap{max-width:1100px;margin:0 auto}
-    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-    .brand{display:flex;align-items:center;gap:12px}
-    .brand h1{margin:0;font-size:20px}
-    .logout{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:var(--muted);text-decoration:none}
-    .card{background:rgba(255,255,255,0.02); padding:22px; border-radius:12px; box-shadow:0 10px 30px rgba(2,6,23,0.6)}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-    label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
-    input, textarea {
-      width:100%; padding:10px 12px; margin-top:6px; border-radius:8px;
-      border:1px solid rgba(255,255,255,0.04);
-      background:rgba(255,255,255,0.02); color:var(--white);
-    }
-    textarea{resize:vertical; min-height:120px}
-    .actions{display:flex; gap:12px; margin-top:14px}
-    .btn{
-      padding:12px 16px; border-radius:10px; cursor:pointer; border:0; color:white; font-weight:600;
-      background:var(--accent); transition:all .25s ease;
-    }
-    .btn.sending{background:var(--warn); cursor:progress}
-    .btn.done{background:var(--good)}
-    .muted{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .log{margin-top:12px; max-height:220px; overflow:auto; padding:10px; border-radius:8px; background:rgba(0,0,0,0.2); font-size:13px}
-    .hint{font-size:13px;color:var(--muted);margin-top:10px}
-    .progressWrap{margin-top:12px;background:rgba(255,255,255,0.03);border-radius:8px;padding:10px}
-    .bar{height:12px;background:rgba(255,255,255,0.06);border-radius:8px;overflow:hidden}
-    .barInner{height:100%; width:0%; background:linear-gradient(90deg,var(--accent),#0fb0ff); transition:width 400ms linear}
-    .small{font-size:12px;color:#b8cfe6;margin-top:6px}
-    @media (max-width:900px){ .grid{grid-template-columns:1fr} }
-  </style>
+        .container {
+            max-width: 850px;
+            margin: 40px auto;
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-radius: 18px;
+            padding: 35px 45px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 600;
+            color: #2d3436;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: 500;
+            color: #2d3436;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border-radius: 10px;
+            border: 1px solid #dfe6e9;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: #0984e3;
+            box-shadow: 0 0 4px rgba(9,132,227,0.4);
+        }
+
+        textarea {
+            height: 130px;
+            resize: none;
+        }
+
+        .btn {
+            margin-top: 20px;
+            width: 100%;
+            padding: 14px;
+            background: #0984e3;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 17px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: #0c6dc0;
+        }
+
+        .logout {
+            text-align: right;
+            margin-top: -20px;
+        }
+
+        .logout a {
+            color: #d63031;
+            font-size: 14px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        #statusBox {
+            margin-top: 25px;
+            padding: 18px;
+            background: #dfe6e9;
+            border-radius: 12px;
+            display: none;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#1976ff"></rect></svg>
-        <div>
-          <h1>📩 Fast Mail Launcher (Pro)</h1>
-          <div class="small">Progress, timings & low-spam rotation</div>
+
+    <div class="container">
+
+        <div class="logout">
+            <a href="/logout">Logout ✖</a>
         </div>
-      </div>
-      <div>
-        <a href="/logout" class="logout">Logout</a>
-      </div>
+
+        <h2>Bulk Mail Sender PRO 🚀</h2>
+
+        <label>Your Name</label>
+        <input id="sender_name" placeholder="Enter your name" />
+
+        <label>Your Gmail</label>
+        <input id="sender_email" placeholder="example@gmail.com" />
+
+        <label>Gmail App Password</label>
+        <input id="sender_pass" type="password" placeholder="16-digit App Password" />
+
+        <label>Recipients (One per line)</label>
+        <textarea id="recipients" placeholder="email1@gmail.com&#10;email2@gmail.com&#10;email3@gmail.com"></textarea>
+
+        <button class="btn" onclick="sendMail()" id="sendBtn">Send Emails</button>
+
+        <div id="statusBox"></div>
     </div>
 
-    <main class="card" role="main">
-      <form id="mailForm" onsubmit="event.preventDefault(); sendMail()">
-        <div class="grid">
-          <div>
-            <label>Sender name (optional)</label>
-            <input id="sender_name" name="sender_name" placeholder="Your name (optional)">
+    <script>
+        function sendMail() {
+            const btn = document.getElementById("sendBtn");
+            btn.innerText = "Sending...";
+            btn.style.background = "#636e72";
+            btn.disabled = true;
 
-            <label>Your Gmail (must be Gmail)</label>
-            <input id="sender_email" name="sender_email" type="email" placeholder="you@gmail.com" required>
+            let data = {
+                sender_name: document.getElementById("sender_name").value,
+                sender_email: document.getElementById("sender_email").value,
+                sender_pass: document.getElementById("sender_pass").value,
+                recipients: document.getElementById("recipients").value
+            };
 
-            <label>App Password (16-char)</label>
-            <input id="sender_pass" name="sender_pass" type="password" placeholder="xxxxxxxxxxxxxxxx" required>
+            fetch('/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(data)
+            })
+            .then(res => res.json())
+            .then(result => {
+                let box = document.getElementById("statusBox");
+                box.style.display = "block";
+                box.innerHTML = `✔ Total: ${result.total} | ✅ Success: ${result.success} | ❌ Failed: ${result.failed}`;
 
-            <label>Subject (optional — leave blank to auto-rotate)</label>
-            <input id="subject" name="subject" placeholder="Optional short subject (2–3 words)">
-          </div>
+                btn.innerText = "Sent Successfully";
+                btn.style.background = "#00b894";
+            })
+            .catch(err => alert("Error Sending Emails"));
+        }
+    </script>
 
-          <div>
-            <label>Message (optional — leave blank to use rotated templates)</label>
-            <textarea id="body" name="body" placeholder="Write short message (or leave blank)"></textarea>
-
-            <label>Recipients (comma or newline separated) — paste up to 30 emails</label>
-            <textarea id="recipients" name="recipients" placeholder="email1@example.com, email2@example.com or one per line" required></textarea>
-
-            <div class="hint">Tip: use newline or comma. Fields will remain filled after send.</div>
-          </div>
-        </div>
-
-        <div class="actions">
-          <button id="sendBtn" class="btn" type="submit">Send All</button>
-          <button id="clearBtn" type="button" class="muted">Clear Fields</button>
-        </div>
-
-        <div class="progressWrap" aria-hidden="false" style="display:none" id="progressArea">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div class="small" id="progressText">Sending 0 / 0</div>
-            <div class="small" id="avgTime">Avg: — s</div>
-          </div>
-          <div class="bar" aria-hidden="true">
-            <div class="barInner" id="barInner" style="width:0%"></div>
-          </div>
-        </div>
-
-        <div id="statusLog" class="log" aria-live="polite"></div>
-      </form>
-    </main>
-  </div>
-
-<script>
-  const sendBtn = document.getElementById('sendBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const statusLog = document.getElementById('statusLog');
-  const progressArea = document.getElementById('progressArea');
-  const barInner = document.getElementById('barInner');
-  const progressText = document.getElementById('progressText');
-  const avgTimeEl = document.getElementById('avgTime');
-
-  clearBtn.addEventListener('click', () => {
-    document.getElementById('sender_name').value = '';
-    document.getElementById('sender_email').value = '';
-    document.getElementById('sender_pass').value = '';
-    document.getElementById('subject').value = '';
-    document.getElementById('body').value = '';
-    document.getElementById('recipients').value = '';
-    statusLog.innerHTML = '';
-    progressArea.style.display = 'none';
-    barInner.style.width = '0%';
-  });
-
-  function setSendingState(total) {
-    sendBtn.disabled = true;
-    sendBtn.classList.add('sending');
-    sendBtn.textContent = 'Sending...';
-    progressArea.style.display = 'block';
-    barInner.style.width = '0%';
-    progressText.textContent = `Sending 0 / ${total}`;
-    avgTimeEl.textContent = `Avg: — s`;
-    statusLog.innerHTML = '';
-  }
-
-  function resetButtonState(ok=false) {
-    sendBtn.disabled = false;
-    sendBtn.classList.remove('sending');
-    sendBtn.textContent = ok ? 'Done ✓' : 'Send All';
-    if (ok) {
-      sendBtn.classList.add('done');
-      setTimeout(()=> sendBtn.classList.remove('done'), 2200);
-    }
-  }
-
-  async function sendMail() {
-    const sender_name = document.getElementById('sender_name').value.trim();
-    const sender_email = document.getElementById('sender_email').value.trim();
-    const sender_pass = document.getElementById('sender_pass').value.trim();
-    const subject = document.getElementById('subject').value.trim();
-    const body = document.getElementById('body').value.trim();
-    const recipients_raw = document.getElementById('recipients').value.trim();
-
-    if (!sender_email || !sender_pass || !recipients_raw) {
-      Swal.fire('Missing fields','Please enter your Gmail, App Password and at least one recipient.','warning');
-      return;
-    }
-
-    // Prepare recipients counting (support newlines & commas)
-    const raw = recipients_raw.replace(/\r/g,'').replace(/\n/g,',');
-    const recipients = raw.split(',').map(s => s.trim()).filter(Boolean);
-
-    const total = recipients.length;
-    if (total === 0) return;
-
-    setSendingState(total);
-
-    const fd = new FormData();
-    fd.append('sender_name', sender_name);
-    fd.append('sender_email', sender_email);
-    fd.append('sender_pass', sender_pass);
-    // pass subject/body to server (server will auto-rotate if blank)
-    fd.append('subject', subject);
-    fd.append('body', body);
-    fd.append('recipients', recipients_raw); // send original raw; server will parse
-
-    // Optimistic progress: incrementally animate while waiting (not exact)
-    let optimistic = 0;
-    const optimisticInterval = setInterval(() => {
-      optimistic = Math.min(optimistic + (100/Math.max(total,1))*0.08, 90); // go up to 90%
-      barInner.style.width = optimistic + '%';
-    }, 300);
-
-    try {
-      const res = await fetch('/send', { method: 'POST', body: fd });
-      clearInterval(optimisticInterval);
-
-      if (!res.ok) throw new Error('Server error');
-      const data = await res.json();
-
-      // Set progress to 100%
-      barInner.style.width = '100%';
-      progressText.textContent = `Sent ${data.success} / ${data.total || total}`;
-
-      // Show SweetAlert summary
-      Swal.fire({
-        title: data.failed === 0 ? 'All sent ✅' : 'Partial result ⚠️',
-        html: `<b>Total:</b> ${data.total || total}<br><b>Success:</b> ${data.success}<br><b>Failed:</b> ${data.failed}`,
-        icon: data.failed === 0 ? 'success' : 'warning'
-      });
-
-      // Show detailed times if provided
-      statusLog.innerHTML = '';
-      if (data.times && Array.isArray(data.times) && data.times.length) {
-        let sum = 0;
-        data.times.forEach((t, idx) => {
-          sum += Number(t) || 0;
-          const d = document.createElement('div');
-          d.textContent = `#${idx+1}: ${t}s`;
-          statusLog.appendChild(d);
-        });
-        const avg = (sum / data.times.length).toFixed(2);
-        avgTimeEl.textContent = `Avg: ${avg} s`;
-      } else if (data.details && data.details.length) {
-        data.details.forEach(d => {
-          const p = document.createElement('div');
-          p.textContent = `${d.email} → ${d.status}` + (d.error ? ` (${d.error})` : '');
-          statusLog.appendChild(p);
-        });
-      } else {
-        statusLog.innerHTML = `<div>Success: ${data.success} | Failed: ${data.failed}</div>`;
-      }
-
-      resetButtonState(data.failed === 0);
-
-    } catch (err) {
-      clearInterval(optimisticInterval);
-      console.error(err);
-      barInner.style.width = '0%';
-      progressText.textContent = 'Send failed';
-      statusLog.innerHTML = '<div style="color:salmon">Send failed — check server logs or App Password.</div>';
-      Swal.fire('Error','Failed to send. Check console/server logs and App Password.','error');
-      resetButtonState(false);
-    }
-  }
-</script>
 </body>
 </html>
