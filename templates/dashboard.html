@@ -1,50 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bulk Mail Sender</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="container">
+    <h2>📨 Bulk Mail Sender (Pro)</h2>
+
+    <input type="text" id="sender_name" placeholder="Sender Name">
+    <input type="email" id="sender_email" placeholder="Your Gmail">
+    <input type="password" id="sender_pass" placeholder="App Password (16 digit)">
+    <input type="text" id="subject" placeholder="Subject">
+
+    <textarea id="body" rows="6" placeholder="Message"></textarea>
+
+    <textarea id="recipients" rows="6" placeholder="Emails (comma or line separated)"></textarea>
+
+    <button id="sendBtn" onclick="sendMail()">Send</button>
+</div>
+
+<!-- POPUP -->
+<div id="popupBox"></div>
+
 <script>
-    const form = document.getElementById('mailForm');
-    const sendBtn = document.getElementById('sendBtn');
+function sendMail() {
+    const btn = document.getElementById("sendBtn");
+    btn.classList.add("sending");
+    btn.innerHTML = "Sending...";
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    const data = new FormData();
+    data.append("sender_name", document.getElementById("sender_name").value);
+    data.append("sender_email", document.getElementById("sender_email").value);
+    data.append("sender_pass", document.getElementById("sender_pass").value);
+    data.append("subject", document.getElementById("subject").value);
+    data.append("body", document.getElementById("body").value);
+    data.append("recipients", document.getElementById("recipients").value);
 
-      // Change button state to "Sending..."
-      sendBtn.disabled = true;
-      sendBtn.innerText = "Sending...";
-      sendBtn.classList.remove("bg-blue-500", "hover:bg-blue-600");
-      sendBtn.classList.add("bg-gray-400", "cursor-not-allowed");
+    fetch("/send", { method: "POST", body: data })
+    .then(res => res.json())
+    .then(res => {
+        btn.classList.remove("sending");
+        btn.classList.add("sent");
+        btn.innerHTML = "✓ Sent";
 
-      const formData = new FormData(form);
-
-      try {
-        const response = await fetch('/send', { method: 'POST', body: formData });
-        const result = await response.json();
-
-        Swal.fire({
-          title: '✅ Mail Sent!',
-          html: `
-            <b>Total:</b> ${result.total}<br>
-            <b>Success:</b> ${result.success}<br>
-            <b>Failed:</b> ${result.failed}<br><br>
-            <span style='color:green;font-weight:bold;'>Your filled details are not cleared.</span>
-          `,
-          icon: 'success',
-          confirmButtonText: 'OK'
-        });
-
-        // ❌ ❌ NO RESET NOW
-        // form.reset();  ← ye hata diya
-
-      } catch (error) {
-        Swal.fire({
-          title: '❌ Error!',
-          text: 'Something went wrong while sending mails.',
-          icon: 'error',
-          confirmButtonText: 'Retry'
-        });
-      }
-
-      // Reset button state
-      sendBtn.disabled = false;
-      sendBtn.innerText = "Send All";
-      sendBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
-      sendBtn.classList.add("bg-blue-500", "hover:bg-blue-600");
+        document.getElementById("popupBox").style.display = "block";
+        document.getElementById("popupBox").innerHTML =
+            `<h3>Mail Report</h3>
+            <p>Total: ${res.total}</p>
+            <p style='color:green;'>Success: ${res.success}</p>
+            <p style='color:red;'>Failed: ${res.failed}</p>
+            <button onclick='closePopup()'>OK</button>`;
     });
+}
+
+function closePopup() {
+    document.getElementById("popupBox").style.display = "none";
+}
 </script>
+
+</body>
+</html>
