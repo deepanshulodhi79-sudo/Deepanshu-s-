@@ -1,162 +1,220 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bulk Mail Sender Pro</title>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mailer Dashboard Pro</title>
     <style>
+        :root {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --text: #111;
+            --primary: #4f46e5;
+            --success: #16a34a;
+            --danger: #dc2626;
+        }
+        .dark {
+            --bg: #0f0f10;
+            --card: #1a1a1c;
+            --text: #e5e5e5;
+        }
         body {
-            font-family: "Poppins", sans-serif;
-            background: #f5f6fa;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
             margin: 0;
             padding: 0;
         }
-
+        .nav {
+            padding: 18px 25px;
+            background: var(--card);
+            display: flex;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
         .container {
-            max-width: 850px;
-            margin: 40px auto;
-            background: #ffffff;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            border-radius: 18px;
-            padding: 35px 45px;
+            width: 92%;
+            margin: auto;
+            padding-top: 25px;
         }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 25px;
-            font-size: 28px;
-            font-weight: 600;
-            color: #2d3436;
+        .card {
+            background: var(--card);
+            padding: 22px;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+            margin-bottom: 22px;
         }
-
-        label {
-            display: block;
-            margin-top: 15px;
-            font-weight: 500;
-            color: #2d3436;
-        }
-
         input, textarea {
             width: 100%;
             padding: 12px;
-            margin-top: 5px;
             border-radius: 10px;
-            border: 1px solid #dfe6e9;
-            font-size: 15px;
-            outline: none;
-            transition: all 0.2s;
+            border: 1px solid #9993;
+            background: var(--bg);
+            color: var(--text);
+            margin-top: 8px;
         }
-
-        input:focus,
-        textarea:focus {
-            border-color: #0984e3;
-            box-shadow: 0 0 4px rgba(9,132,227,0.4);
-        }
-
-        textarea {
-            height: 130px;
-            resize: none;
-        }
-
-        .btn {
-            margin-top: 20px;
-            width: 100%;
-            padding: 14px;
-            background: #0984e3;
+        button {
+            background: var(--primary);
             color: white;
-            border: none;
+            padding: 12px 22px;
             border-radius: 10px;
-            font-size: 17px;
+            border: none;
             cursor: pointer;
-            font-weight: 600;
-            transition: 0.3s;
+            font-size: 15px;
         }
-
-        .btn:hover {
-            background: #0c6dc0;
+        button:disabled {
+            opacity: .5;
         }
-
-        .logout {
-            text-align: right;
-            margin-top: -20px;
+        .stats {
+            display: flex;
+            gap: 18px;
         }
-
-        .logout a {
-            color: #d63031;
-            font-size: 14px;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        #statusBox {
-            margin-top: 25px;
-            padding: 18px;
-            background: #dfe6e9;
+        .statbox {
+            flex: 1;
+            background: var(--card);
+            padding: 20px;
             border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+        .loader {
+            border: 4px solid #ddd;
+            border-top: 4px solid var(--primary);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: auto;
             display: none;
-            font-weight: 500;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            background: var(--card);
+            padding: 25px 35px;
+            border-radius: 14px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.3);
+            display: none;
+        }
+        .toggle-btn {
+            background: none;
+            border: 1px solid var(--text);
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text);
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-
-        <div class="logout">
-            <a href="/logout">Logout ✖</a>
-        </div>
-
-        <h2>Bulk Mail Sender PRO 🚀</h2>
-
-        <label>Your Name</label>
-        <input id="sender_name" placeholder="Enter your name" />
-
-        <label>Your Gmail</label>
-        <input id="sender_email" placeholder="example@gmail.com" />
-
-        <label>Gmail App Password</label>
-        <input id="sender_pass" type="password" placeholder="16-digit App Password" />
-
-        <label>Recipients (One per line)</label>
-        <textarea id="recipients" placeholder="email1@gmail.com&#10;email2@gmail.com&#10;email3@gmail.com"></textarea>
-
-        <button class="btn" onclick="sendMail()" id="sendBtn">Send Emails</button>
-
-        <div id="statusBox"></div>
+    <div class="nav">
+        <h2>Mailer Pro Dashboard</h2>
+        <button class="toggle-btn" onclick="toggleTheme()">Toggle Dark</button>
     </div>
 
-    <script>
-        function sendMail() {
-            const btn = document.getElementById("sendBtn");
-            btn.innerText = "Sending...";
-            btn.style.background = "#636e72";
-            btn.disabled = true;
+    <div class="container">
 
-            let data = {
-                sender_name: document.getElementById("sender_name").value,
-                sender_email: document.getElementById("sender_email").value,
-                sender_pass: document.getElementById("sender_pass").value,
-                recipients: document.getElementById("recipients").value
-            };
+        <!-- STATS -->
+        <div class="stats">
+            <div class="statbox">
+                <h3>Sent Today</h3>
+                <h1 id="sentToday">0</h1>
+            </div>
+            <div class="statbox">
+                <h3>Daily Limit</h3>
+                <h1>150</h1>
+            </div>
+            <div class="statbox">
+                <h3>Gmail Status</h3>
+                <h1 id="gmailStatus">Checking...</h1>
+            </div>
+        </div>
 
-            fetch('/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams(data)
-            })
-            .then(res => res.json())
-            .then(result => {
-                let box = document.getElementById("statusBox");
-                box.style.display = "block";
-                box.innerHTML = `✔ Total: ${result.total} | ✅ Success: ${result.success} | ❌ Failed: ${result.failed}`;
+        <!-- FORM -->
+        <div class="card">
+            <h2>Send Emails</h2>
 
-                btn.innerText = "Sent Successfully";
-                btn.style.background = "#00b894";
-            })
-            .catch(err => alert("Error Sending Emails"));
-        }
-    </script>
+            <label>Your Name:</label>
+            <input type="text" id="sender_name">
+
+            <label>Your Gmail:</label>
+            <input type="email" id="sender_email">
+
+            <label>App Password:</label>
+            <input type="password" id="sender_pass">
+
+            <label>Recipients (one per line):</label>
+            <textarea id="recipients" rows="6"></textarea>
+
+            <br><br>
+
+            <button id="sendBtn" onclick="sendNow()">Send Emails</button>
+
+            <div class="loader" id="loader"></div>
+        </div>
+
+    </div>
+
+    <!-- SUCCESS POPUP -->
+    <div class="popup" id="popup">
+        <h2>Emails Sent Successfully!</h2>
+        <p id="popupText"></p>
+        <br>
+        <button onclick="hidePopup()">OK</button>
+    </div>
+
+<script>
+function toggleTheme() {
+    document.documentElement.classList.toggle('dark');
+}
+
+function fakeGmailCheck() {
+    setTimeout(() => {
+        document.getElementById("gmailStatus").innerText = "Active";
+    }, 1500);
+}
+fakeGmailCheck();
+
+function sendNow() {
+    let btn = document.getElementById("sendBtn");
+    let loader = document.getElementById("loader");
+
+    btn.disabled = true;
+    loader.style.display = "block";
+    btn.innerText = "Sending...";
+
+    fetch('/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            sender_name: document.getElementById('sender_name').value,
+            sender_email: document.getElementById('sender_email').value,
+            sender_pass: document.getElementById('sender_pass').value,
+            recipients: document.getElementById('recipients').value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        loader.style.display = "none";
+        btn.disabled = false;
+        btn.innerText = "Send Emails";
+
+        document.getElementById("sentToday").innerText = data.success;
+        document.getElementById("popupText").innerText = data.success + " sent, " + data.failed + " failed";
+        document.getElementById("popup").style.display = "block";
+    });
+}
+
+function hidePopup() {
+    document.getElementById("popup").style.display = "none";
+}
+</script>
 
 </body>
 </html>
