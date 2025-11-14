@@ -3,7 +3,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.utils import formatdate, make_msgid
-import os, time, random
+import time, random
 
 app = Flask(__name__)
 app.secret_key = "SUPERSECRET123"
@@ -12,40 +12,46 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "12345"
 
 # -------------------------------------------
-# SUBJECTS (Inbox-safe)
+# SUBJECTS (2–3 words)
 # -------------------------------------------
+
 subjects = [
     "Quick Note",
     "Small Update",
     "Short Insight",
+    "Tiny Suggestion",
     "Website Check",
     "Simple Review",
+    "Small Observation",
     "Little Feedback"
 ]
 
 # -------------------------------------------
-# SAFE ROTATION—SEO feel but spam-proof
+# SAFE ROTATION CONTENT (SEO feel, 0 spam flags)
 # -------------------------------------------
+
 openers = [
-    "I checked your website today",
-    "I had a look at your online presence",
-    "I reviewed your website briefly",
-    "I came across your site recently",
-    "I visited your website earlier"
+    "I visited your website recently",
+    "I checked your online presence today",
+    "I spent a moment reviewing your site",
+    "I came across your website earlier",
+    "I looked over your website briefly"
 ]
 
 middle_lines = [
-    "and noticed a small area that might help its online visibility.",
-    "and found a tiny detail that may improve its appearance online.",
-    "and noticed one minor thing that could refine the online look.",
-    "and saw something small that may enhance how it is seen online."
+    "and noticed one small thing that might help its online visibility.",
+    "and saw a tiny point that could make the site appear better online.",
+    "and found a minor detail that may improve how it is seen on the web.",
+    "and noticed something small that could refine its appearance online.",
+    "and found a little area that might enhance how it shows up online."
 ]
 
 closers = [
-    "Would you like a short overview?",
-    "Should I share a quick outline?",
+    "Would you like me to share a short overview?",
+    "Should I send a quick outline?",
     "Want a brief version of what I found?",
-    "Shall I send a small summary?",
+    "Shall I share a small summary?",
+    "Should I send the details in short?"
 ]
 
 # -------------------------------------------
@@ -57,7 +63,7 @@ def home():
     return redirect('/login')
 
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == "POST":
         u = request.form['username']
@@ -84,26 +90,24 @@ def dashboard():
 
 @app.route('/send', methods=['POST'])
 def send_email():
+
     sender_name  = request.form['sender_name']
     sender_email = request.form['sender_email']
     sender_pass  = request.form['sender_pass']
     recipients   = request.form['recipients']
 
-   # Support: line-by-line, comma, mixed format
-raw_list = recipients.replace("\r", "").replace("\n", ",")
-recipients_list = [i.strip() for i in raw_list.split(",") if i.strip()]
+    # ----------------------------
+    # LINE-BY-LINE + COMMA SUPPORT
+    # ----------------------------
+    raw_list = recipients.replace("\r", "").replace("\n", ",")
+    recipients_list = [i.strip() for i in raw_list.split(",") if i.strip()]
 
     success = 0
     fail = 0
 
-    # Gmail limit safe: 30 per batch
-    MAX_BATCH = 30
-    selected_recipients = recipients_list[:MAX_BATCH]
-
-    for r in selected_recipients:
+    for r in recipients_list:
 
         subject = random.choice(subjects)
-
         body = (
             random.choice(openers)
             + ", "
@@ -128,19 +132,16 @@ recipients_list = [i.strip() for i in raw_list.split(",") if i.strip()]
                 s.send_message(msg)
 
             success += 1
+            time.sleep(0.7)   # optimized safe delay for inbox
 
-            # Natural delay — NOT random (best for inbox)
-            time.sleep(0.8)
-
-        except:
+        except Exception as e:
+            print("Error:", e)
             fail += 1
 
     return jsonify({
-        "total_requested": len(recipients_list),
-        "sent_this_batch": len(selected_recipients),
+        "total": len(recipients_list),
         "success": success,
-        "failed": fail,
-        "status": "completed"
+        "failed": fail
     })
 
 
