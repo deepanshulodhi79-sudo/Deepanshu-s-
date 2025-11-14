@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session, jsonify
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.utils import formatdate, make_msgid
 from dotenv import load_dotenv
 import os, time
 
@@ -58,19 +59,32 @@ def send_email():
 
     for to_email in recipients_list:
         try:
+            # SPAM SAFE EMAIL FORMAT
             msg = MIMEMultipart()
             msg['From'] = f"{sender_name} <{sender_email}>"
             msg['To'] = to_email
-            msg['Subject'] = subject
-            msg.attach(MIMEText(body, 'plain'))
+            msg['Subject'] = subject.encode('utf-8').decode()
+            msg['Reply-To'] = sender_email
+            msg['Message-ID'] = make_msgid()
+            msg['Date'] = formatdate(localtime=True)
+            msg['Content-Language'] = 'en-US'
 
+            # Plain text body
+            msg.attach(MIMEText(body, 'plain', 'utf-8'))
+
+            # Gmail SMTP (anti-spam optimized)
             with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                server.ehlo()
                 server.starttls()
+                server.ehlo()
                 server.login(sender_email, sender_pass)
                 server.send_message(msg)
-            
+
             success += 1
-            time.sleep(1)
+
+            # BEST anti-spam delay
+            time.sleep(2)
+
         except Exception as e:
             print(f"Failed to send to {to_email}: {e}")
             failed += 1
