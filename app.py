@@ -1,76 +1,132 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
-if 'logged_in' not in session:
-return jsonify({'error': 'not-authorized'}), 401
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.utils import formatdate, make_msgid
+import os, time, random
 
+app = Flask(__name__)
+app.secret_key = "SUPERSECRET123"   # Change on Render ENV
 
-sender_name = request.form.get('sender_name','').strip()
-sender_email = request.form.get('sender_email','').strip()
-sender_pass = request.form.get('sender_pass','').strip()
-subject_input = request.form.get('subject','').strip()
-body_input = request.form.get('body','').strip()
-recipients_raw = request.form.get('recipients','').strip()
+ADMIN_USER = "admin"
+ADMIN_PASS = "12345"
 
+# -------------------------------------------
+# ROTATION SYSTEM (Subjects + Body)
+# -------------------------------------------
 
-if not sender_email or not sender_pass or not recipients_raw:
-return jsonify({'error':'missing-fields'}), 400
+subjects = [
+    "Quick note about your website",
+    "Found something interesting on your site",
+    "Short observation about your online presence",
+    "Something useful regarding your website",
+    "Small visibility suggestion"
+]
 
+openers = [
+    "I checked your website recently",
+    "I came across your website today",
+    "I was reviewing your online presence",
+    "I looked at how your site appears online",
+    "I explored your website for a moment"
+]
 
-recipients = [r.strip() for r in re.split('[,\n;]+', recipients_raw) if r.strip()]
-recipients = [r for r in recipients if is_valid_email(r)]
+middle_lines = [
+    "and noticed a small point that could help its visibility.",
+    "and found a detail that may improve how it appears in search results.",
+    "and saw something meaningful that could be beneficial.",
+    "and found a tiny improvement opportunity.",
+    "and noticed something that could help boost its presence."
+]
 
+closers = [
+    "Should I send a short overview?",
+    "Want me to share a quick summary?",
+    "Shall I send a brief note?",
+    "Would you like a small breakdown?",
+    "Should I forward the details?"
+]
 
-total = len(recipients)
-success = 0
-failed = 0
-details = []
+# -------------------------------------------
 
+@app.route('/')
+def home():
+    if 'logged_in' in session:
+        return redirect('/dashboard')
+    return redirect('/login')
 
-# Compose rotated subject/body
-for idx, to_email in enumerate(recipients, start=1):
-subj, body = compose_rotated_message(subject_input, body_input)
+@app.route('/login', methods=['GET','POST'])
+def login():
+    if request.method == "POST":
+        u = request.form['username']
+        p = request.form['password']
+        if u == ADMIN_USER and p == ADMIN_PASS:
+            session['logged_in'] = True
+            return redirect('/dashboard')
+        return render_template("login.html", message="Invalid credentials")
+    return render_template("login.html")
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/login')
 
-try:
-msg = MIMEMultipart()
-msg['From'] = f"{sender_name} <{sender_email}>" if sender_name else sender_email
-msg['To'] = to_email
-msg['Subject'] = subj
-msg['Reply-To'] = sender_email
-msg['Message-ID'] = make_msgid()
-msg['Date'] = formatdate(localtime=True)
-msg['Content-Language'] = 'en-US'
+@app.route('/dashboard')
+def dashboard():
+    if 'logged_in' not in session:
+        return redirect('/login')
+    return render_template("dashboard.html")
 
+@app.route('/send', methods=['POST'])
+def send_email():
+    sender_name  = request.form['sender_name']
+    sender_email = request.form['sender_email']
+    sender_pass  = request.form['sender_pass']
+    recipients   = request.form['recipients']
 
-msg.attach(MIMEText(body, 'plain', 'utf-8'))
+    recipients_list = [i.strip() for i in recipients.split(",") if i.strip()]
 
+    success = 0
+    fail = 0
 
-# fast but safe random delay between 0.8 - 1.2 seconds
-delay = random.uniform(0.8, 1.2)
+    for r in recipients_list:
+        
+        subject = random.choice(subjects)
+        body = (
+            random.choice(openers)
+            + ", "
+            + random.choice(middle_lines)
+            + "\n\n"
+            + random.choice(closers)
+        )
 
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = f"{sender_name} <{sender_email}>"
+            msg['To'] = r
+            msg['Subject'] = subject
+            msg['Message-ID'] = make_msgid()
+            msg['Date'] = formatdate(localtime=True)
 
-with smtplib.SMTP('smtp.gmail.com', 587, timeout=30) as server:
-server.ehlo()
-server.starttls()
-server.ehlo()
-server.login(sender_email, sender_pass)
-server.send_message(msg)
+            msg.attach(MIMEText(body, "plain", "utf-8"))
 
+            with smtplib.SMTP('smtp.gmail.com', 587) as s:
+                s.starttls()
+                s.login(sender_email, sender_pass)
+                s.send_message(msg)
 
-success += 1
-details.append({'email': to_email, 'status': 'sent'})
+            success += 1
+            time.sleep(1)  # safe delay
 
+        except Exception as e:
+            print("Error:", e)
+            fail += 1
 
-time.sleep(delay)
+    return jsonify({
+        "total": len(recipients_list),
+        "success": success,
+        "failed": fail
+    })
 
-
-except Exception as e:
-failed += 1
-details.append({'email': to_email, 'status': 'failed', 'error': str(e)})
-
-
-return jsonify({'total': total, 'success': success, 'failed': failed, 'details': details})
-
-
-if __name__ == '__main__':
-port = int(os.environ.get('PORT', 10000))
-app.run(host='0.0.0.0', port=port)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
