@@ -27,7 +27,7 @@ subjects = [
 ]
 
 # -------------------------------------------
-# SAFE ROTATION CONTENT (SEO feel, 0 spam flags)
+# SAFE ROTATION CONTENT (SEO feel, no spam words)
 # -------------------------------------------
 
 openers = [
@@ -96,16 +96,17 @@ def send_email():
     sender_pass  = request.form['sender_pass']
     recipients   = request.form['recipients']
 
-    # ----------------------------
     # LINE-BY-LINE + COMMA SUPPORT
-    # ----------------------------
-    raw_list = recipients.replace("\r", "").replace("\n", ",")
-    recipients_list = [i.strip() for i in raw_list.split(",") if i.strip()]
+    raw = recipients.replace("\r", "").replace("\n", ",")
+    recipients_list = [i.strip() for i in raw.split(",") if i.strip()]
 
     success = 0
     fail = 0
+    send_times = []  # for timer
 
     for r in recipients_list:
+
+        start_time = time.time()
 
         subject = random.choice(subjects)
         body = (
@@ -132,16 +133,23 @@ def send_email():
                 s.send_message(msg)
 
             success += 1
-            time.sleep(0.7)   # optimized safe delay for inbox
+
+            # Optimized safe natural delay
+            time.sleep(0.5)
 
         except Exception as e:
             print("Error:", e)
             fail += 1
 
+        finally:
+            end_time = time.time()
+            send_times.append(round(end_time - start_time, 2))
+
     return jsonify({
         "total": len(recipients_list),
         "success": success,
-        "failed": fail
+        "failed": fail,
+        "times": send_times
     })
 
 
