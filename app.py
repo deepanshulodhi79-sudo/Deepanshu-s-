@@ -11,50 +11,128 @@ app.secret_key = "SUPERSECRET123"
 ADMIN_USER = "admin"
 ADMIN_PASS = "12345"
 
-# -------------------------------------------
-# SUBJECTS (2–3 words)
-# -------------------------------------------
-
+# ---------------------------------------------------------
+# 50+ SUPER SAFE SUBJECT LINES (2–4 words)
+# ---------------------------------------------------------
 subjects = [
-    "Quick Note",
-    "Small Update",
-    "Short Insight",
+    "Quick Website Note",
+    "Short Review Update",
+    "Small Visibility Check",
+    "Brief Site Insight",
+    "Tiny Google Check",
+    "Website Visibility Tip",
+    "Simple Site Update",
+    "Short Observation",
+    "Quick Visibility Look",
+    "Small Review Note",
+    "Brief Website Check",
+    "Short Google Insight",
+    "Simple Visibility Review",
+    "Quick Online Update",
+    "Small Online Check",
+    "Short Improvement Note",
+    "Light Website Review",
+    "Simple Site Overview",
+    "Quick Online Insight",
+    "Website Review Point",
+    "Short Visibility Point",
+    "Small Optimization Hint",
+    "Tiny Review Update",
+    "Short Summary Note",
+    "Simple Review Alert",
+    "Small Website Look",
+    "Short Online Point",
+    "Quick Observation",
+    "Simple Insight",
+    "Short Site Thought",
+    "Website Note",
+    "Review Brief",
+    "Small Feedback",
     "Tiny Suggestion",
-    "Website Check",
-    "Simple Review",
-    "Small Observation",
-    "Little Feedback"
+    "Insight Update",
+    "Brief Observation",
+    "Online Check",
+    "Site Review Note",
+    "Visibility Check",
+    "Short Reminder",
+    "Simple Alert",
+    "Quick Check",
+    "Short Look",
+    "Brief Note",
+    "Small Review",
+    "Tiny Insight",
+    "Simple Update",
+    "Short Hint",
+    "Quick Point"
 ]
 
-# -------------------------------------------
-# SAFE ROTATION CONTENT (SEO feel, no spam words)
-# -------------------------------------------
+# ---------------------------------------------------------
+# YOUR FULL SEO CONTENT (Converted into AI-Rotation Blocks)
+# ---------------------------------------------------------
 
-openers = [
-    "I visited your website recently",
-    "I checked your online presence today",
-    "I spent a moment reviewing your site",
-    "I came across your website earlier",
-    "I looked over your website briefly"
-]
+hi_lines = ["Hello", "Hi"]
 
 middle_lines = [
-    "and noticed one small thing that might help its online visibility.",
-    "and saw a tiny point that could make the site appear better online.",
-    "and found a minor detail that may improve how it is seen on the web.",
-    "and noticed something small that could refine its appearance online.",
-    "and found a little area that might enhance how it shows up online."
+    "Your website is impressive, though it lacks proper visibility in Google search.",
+    "Your site looks great, but it’s not appearing clearly on Google.",
+    "I reviewed your site—it’s well-designed, but visibility on Google is limited.",
+    "Your website is solid, but it doesn’t show up on Google’s 1st page.",
+    "Your site is professional, though it’s missing strong Google visibility.",
+    "Your website looks good, but it’s not easily found on Google.",
+    "I checked your site—it’s appealing, but lacks proper Google visibility.",
+    "Your site design is strong, but it’s not visible enough in Google search.",
+    "Your website is well-made, but it’s not showing prominently on Google.",
+    "Your site looks sharp, but its Google visibility is low.",
+    "I noticed your site looks great, but it lacks Google visibility.",
+    "Your website is appealing, but it’s not visible on Google’s first page.",
+    "Your site is strong, but it’s missing reach in Google search.",
+    "I reviewed your site—it’s good, but not appearing on Google.",
+    "Your website looks professional, but its Google visibility is limited.",
+    "Your site design is clean, but it’s not visible enough online.",
+    "I checked your site—it’s impressive, but not showing up on Google.",
+    "Your website is solid, but it’s not visible in search results.",
+    "Your site looks good, but it’s not easily discoverable on Google.",
+    "Your website is appealing, but it’s not visible on Google’s top pages.",
+    "Your site is professional, but it’s not appearing prominently on Google.",
+    "Your website looks sharp, but its visibility on Google is low.",
+    "Your site is well-made, but it’s not visible enough in Google search.",
+    "I reviewed your site—it’s appealing, but not showing on Google’s 1st page.",
+    "Your website is strong, but it’s not visible in common searches.",
+    "Your site looks good, but it’s missing visibility on Google.",
+    "Your website is impressive, but it’s not appearing clearly online.",
+    "I checked your site—it’s solid, but lacks Google visibility.",
+    "Your site is professional, but it’s not visible enough online.",
+    "Your website is appealing, but it’s not showing up on Google.",
+    "I checked your site—it’s impressive, but visibility is low.",
+    "Your site is solid, but it’s not visible in Google search.",
+    "Your website looks good, but it’s not appearing prominently.",
+    "Your site is professional, but it’s missing visibility on Google.",
+    "I noticed your site—it’s appealing, but not visible enough.",
+    "Your website is strong, but it’s not showing on Google’s 1st page.",
+    "Your site looks sharp, but its visibility is limited.",
+    "Your website is appealing, but it’s not visible in search results.",
+    "I reviewed your site—it’s good, but not appearing clearly on Google.",
+    "Your site is professional, but it’s not visible enough in Google search.",
+    "Your website looks impressive, but it’s not showing prominently.",
+    "Your site is appealing, but its Google visibility is low."
 ]
 
-closers = [
-    "Would you like me to share a short overview?",
-    "Should I send a quick outline?",
-    "Want a brief version of what I found?",
-    "Shall I share a small summary?",
-    "Should I send the details in short?"
+closing_lines = [
+    "Can I forward you a quote?",
+    "Should I send you a price list?",
+    "May I share a quick quote?",
+    "Can I email you a price list?",
+    "Would you like me to send a quote?",
+    "Should I forward you a quick price list?",
+    "May I share the details?",
+    "Would you like a short overview?",
+    "Should I send a small summary?",
+    "Can I forward the details?"
 ]
 
-# -------------------------------------------
+# ---------------------------------------------------------
+# ROUTES
+# ---------------------------------------------------------
 
 @app.route('/')
 def home():
@@ -62,24 +140,19 @@ def home():
         return redirect('/dashboard')
     return redirect('/login')
 
-
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == "POST":
-        u = request.form['username']
-        p = request.form['password']
-        if u == ADMIN_USER and p == ADMIN_PASS:
+        if request.form['username'] == ADMIN_USER and request.form['password'] == ADMIN_PASS:
             session['logged_in'] = True
             return redirect('/dashboard')
         return render_template("login.html", message="Invalid credentials")
     return render_template("login.html")
 
-
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/login')
-
 
 @app.route('/dashboard')
 def dashboard():
@@ -87,6 +160,9 @@ def dashboard():
         return redirect('/login')
     return render_template("dashboard.html")
 
+# ---------------------------------------------------------
+# CORE SENDING ENGINE
+# ---------------------------------------------------------
 
 @app.route('/send', methods=['POST'])
 def send_email():
@@ -96,26 +172,18 @@ def send_email():
     sender_pass  = request.form['sender_pass']
     recipients   = request.form['recipients']
 
-    # LINE-BY-LINE + COMMA SUPPORT
     raw = recipients.replace("\r", "").replace("\n", ",")
-    recipients_list = [i.strip() for i in raw.split(",") if i.strip()]
+    emails = [i.strip() for i in raw.split(",") if i.strip()]
 
     success = 0
-    fail = 0
-    send_times = []  # for timer
+    failed = 0
+    send_times = []
 
-    for r in recipients_list:
-
-        start_time = time.time()
+    for r in emails:
+        start = time.time()
 
         subject = random.choice(subjects)
-        body = (
-            random.choice(openers)
-            + ", "
-            + random.choice(middle_lines)
-            + "\n\n"
-            + random.choice(closers)
-        )
+        body = f"{random.choice(hi_lines)},\n{random.choice(middle_lines)}\n\n{random.choice(closing_lines)}"
 
         try:
             msg = MIMEMultipart()
@@ -133,25 +201,20 @@ def send_email():
                 s.send_message(msg)
 
             success += 1
+            time.sleep(0.5)  # speed optimized
 
-            # Optimized safe natural delay
-            time.sleep(0.5)
-
-        except Exception as e:
-            print("Error:", e)
-            fail += 1
+        except:
+            failed += 1
 
         finally:
-            end_time = time.time()
-            send_times.append(round(end_time - start_time, 2))
+            send_times.append(round(time.time() - start, 2))
 
     return jsonify({
-        "total": len(recipients_list),
+        "total": len(emails),
         "success": success,
-        "failed": fail,
+        "failed": failed,
         "times": send_times
     })
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
