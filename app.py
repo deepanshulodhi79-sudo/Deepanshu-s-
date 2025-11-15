@@ -1,95 +1,74 @@
-from flask import Flask, render_template, request, redirect, session, jsonify
+from flask import Flask, render_template, request, redirect, session
 import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.utils import formatdate, make_msgid
+from email.message import EmailMessage
 import time
 
 app = Flask(__name__)
-app.secret_key = "SUPERSECRET123"
+app.secret_key = "supersecretkey"
 
-ADMIN_USER = "admin"
-ADMIN_PASS = "12345"
-
-
-@app.route('/')
-def home():
-    if 'logged_in' in session:
-        return redirect('/dashboard')
-    return redirect('/login')
-
-
-@app.route('/login', methods=['GET', 'POST'])
+# ---------- LOGIN (FIXED) ----------
+@app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        if request.form['username'] == ADMIN_USER and request.form['password'] == ADMIN_PASS:
-            session['logged_in'] = True
-            return redirect('/dashboard')
-        return render_template("login.html", message="Invalid credentials")
+        user = request.form["username"]
+        pwd = request.form["password"]
+
+        if user == "admin" and pwd == "admin123":
+            session["user"] = user
+            return redirect("/dashboard")
+        else:
+            return render_template("login.html", error="Invalid login")
+
     return render_template("login.html")
 
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect('/login')
-
-
-@app.route('/dashboard')
+# ---------- DASHBOARD ----------
+@app.route("/dashboard")
 def dashboard():
-    if 'logged_in' not in session:
-        return redirect('/login')
+    if "user" not in session:
+        return redirect("/")
     return render_template("dashboard.html")
 
+# ---------- SEND MAIL ----------
+@app.route("/send_mail", methods=["POST"])
+def send_mail():
+    if "user" not in session:
+        return {"status": "error"}
 
-# ------------------------------
-# MAIL SENDER (CUSTOM SUBJECT + MESSAGE)
-# ------------------------------
+    subject = request.form["subject"]
+    message = request.form["message"]
+    emails_raw = request.form["emails"]
 
-@app.route('/send-mails', methods=['POST'])
-def send_mails():
-    data = request.get_json()
+    email_list = [e.strip() for e in emails_raw.split("\n") if e.strip()]
 
-    sender_name  = "Sender"
-    sender_email = data.get("email")
-    sender_pass  = data.get("password")
+    # ---------- SMTP LOGIN ----------
+    smtp_user = "yourgmail@gmail.com"
+    smtp_pass = "your_app_password"
 
-    subject = data.get("subject")
-    message = data.get("message")
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(smtp_user, smtp_pass)
 
-    raw = data.get("emails", "")
-    recipients = [i.strip() for i in raw.split("\n") if i.strip()]
+        for email in email_list:
+            msg = EmailMessage()
+            msg["Subject"] = subject
+            msg["From"] = smtp_user
+            msg["To"] = email
+            msg.set_content(message)
 
-    success = 0
-    failed = 0
+            server.send_message(msg)
+            time.sleep(0.1)  # FAST 10–15 sec for 25 mails
 
-    for r in recipients:
-        try:
-            msg = MIMEMultipart()
-            msg['From'] = f"{sender_name} <{sender_email}>"
-            msg['To'] = r
-            msg['Subject'] = subject
-            msg['Message-ID'] = make_msgid()
-            msg['Date'] = formatdate(localtime=True)
-            msg.attach(MIMEText(message, "plain", "utf-8"))
+        server.quit()
+        return {"status": "success"}
 
-            with smtplib.SMTP('smtp.gmail.com', 587) as s:
-                s.starttls()
-                s.login(sender_email, sender_pass)
-                s.send_message(msg)
+    except Exception as e:
+        return {"status": "error", "msg": str(e)}
 
-            success += 1
-            time.sleep(0.2)
+# ---------- LOGOUT ----------
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
 
-        except:
-            failed += 1
-
-    return jsonify({
-        "total": len(recipients),
-        "success": success,
-        "failed": failed
-    })
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+app.run(host="0.0.0.0", port=10000)
