@@ -30,17 +30,9 @@
         font-size: 15px;
         margin-bottom: 15px;
     }
-    textarea {
-        height: 110px;
-        resize: none;
-    }
-    .row {
-        display: flex;
-        gap: 10px;
-    }
-    .half {
-        width: 50%;
-    }
+    textarea { height: 110px; resize: none; }
+    .row { display: flex; gap: 10px; }
+    .half { width: 50%; }
     .btn {
         background: #2f74ff;
         color: white;
@@ -51,11 +43,8 @@
         font-size: 16px;
         border: none;
     }
-    .btn:hover {
-        opacity: 0.9;
-    }
+    .btn:hover { opacity: 0.9; }
 
-    /* email count badge */
     .badge {
         position: absolute;
         right: 18px;
@@ -67,7 +56,6 @@
         font-size: 12px;
     }
 
-    /* popup */
     #successPopup {
         display: none;
         position: fixed;
@@ -82,7 +70,6 @@
         font-weight: bold;
     }
 
-    /* loading */
     #loading {
         display: none;
         text-align: center;
@@ -117,7 +104,7 @@
 
     <div class="row">
         <button class="btn" onclick="sendAll()">Send All</button>
-        <button class="btn" onclick="logout()" style="background:#444">Logout</button>
+        <button class="btn" onclick="logout()" style="background:#333">Logout</button>
     </div>
 
     <div id="loading">⏳ Sending emails… Please wait…</div>
@@ -126,7 +113,6 @@
 <div id="successPopup">✔ Emails Sent Successfully!</div>
 
 <script>
-    // live email counter
     document.getElementById("emails").addEventListener("input", () => {
         let raw = document.getElementById("emails").value
             .replace(/\n/g, ",")
@@ -136,7 +122,6 @@
         document.getElementById("emailCount").innerText = raw.length + " emails";
     });
 
-    // sending function
     function sendAll() {
         let data = {
             sender_name: document.getElementById("sname").value,
@@ -144,13 +129,8 @@
             sender_pass: document.getElementById("pass").value,
             subject: document.getElementById("subject").value,
             message: document.getElementById("msg").value,
-            recipients: document.getElementById("emails").value,
+            recipients: document.getElementById("emails").value
         };
-
-        if (!data.sender_email || !data.sender_pass || !data.recipients) {
-            alert("Please fill all required fields.");
-            return;
-        }
 
         document.getElementById("loading").style.display = "block";
 
