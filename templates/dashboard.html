@@ -3,155 +3,87 @@
 <head>
     <title>Dashboard</title>
     <style>
-        body {
-            background: #101010;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 25px;
-        }
-        .logout-btn {
-            background: #ff4444;
-            padding: 10px 18px;
-            border: none;
-            color: white;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .container {
-            width: 600px;
-            margin: auto;
-            background: #1d1d1d;
-            padding: 25px;
-            border-radius: 12px;
-        }
+        body {background:#111;color:#fff;font-family:Arial;padding:20px;}
+        .box {width:600px;margin:auto;background:#1b1b1b;padding:25px;border-radius:10px;}
         input, textarea {
-            width: 100%;
-            padding: 12px;
-            margin-top: 12px;
-            background: #2b2b2b;
-            border: none;
-            color: #fff;
-            border-radius: 8px;
-            font-size: 15px;
+            width:100%;padding:12px;margin-top:10px;
+            background:#2b2b2b;border:none;color:#fff;border-radius:6px;
         }
         button {
-            width: 100%;
-            padding: 15px;
-            margin-top: 18px;
-            background: #00eaff;
-            border: none;
-            font-size: 17px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            color: #000;
+            width:100%;padding:15px;margin-top:15px;
+            background:#00eaff;border:none;border-radius:6px;
+            font-size:17px;font-weight:bold;color:#000;cursor:pointer;
         }
-        .loader {
-            display:none;
-            margin-top:15px;
-            text-align:center;
-            font-size: 18px;
-        }
+        .loader {display:none;text-align:center;margin-top:15px;font-size:18px;}
         .popup {
-            display:none;
-            position:fixed;
-            top:0;
-            left:0;
-            height:100%;
-            width:100%;
-            background:rgba(0,0,0,0.75);
-            justify-content:center;
-            align-items:center;
+            display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+            background:rgba(0,0,0,0.7);justify-content:center;align-items:center;
         }
-        .popup-box {
-            background:#222;
-            padding:25px;
-            border-radius:10px;
-            width:320px;
-            text-align:center;
-            border:2px solid #00eaff;
-        }
-        .close-btn {
-            margin-top: 15px;
-            background:#00eaff;
-            padding:8px 14px;
-            border:none;
-            border-radius:6px;
-            cursor:pointer;
-        }
+        .popup-box {background:#222;padding:25px;border-radius:10px;text-align:center;width:300px;}
+        .logout {color:#fff;background:#ff4444;padding:10px 18px;text-decoration:none;border-radius:6px;}
     </style>
 </head>
 <body>
 
-<div class="topbar">
+<div style="display:flex;justify-content:space-between;margin-bottom:20px;">
     <h2>Email Sender</h2>
-    <a class="logout-btn" href="/logout">Logout</a>
+    <a class="logout" href="/logout">Logout</a>
 </div>
 
-<div class="container">
+<div class="box">
+
+    <label>Your Gmail</label>
+    <input id="email" placeholder="yourgmail@gmail.com">
+
+    <label>Password / App Password</label>
+    <input id="password" type="password" placeholder="your gmail password">
 
     <label>Subject</label>
-    <input id="subject" placeholder="Enter mail subject">
+    <input id="subject" placeholder="Enter subject">
 
     <label>Message</label>
-    <textarea id="message" rows="6" placeholder="Enter your message here..."></textarea>
+    <textarea id="message" rows="5" placeholder="Enter your message here"></textarea>
 
-    <label>Emails (one email per line)</label>
-    <textarea id="emails" rows="6" placeholder="example@gmail.com"></textarea>
+    <label>Emails (One per line)</label>
+    <textarea id="emails" rows="6" placeholder="email1@gmail.com&#10;email2@gmail.com"></textarea>
 
     <button onclick="sendMail()">Send Emails</button>
 
-    <div class="loader" id="loader">⏳ Sending emails...</div>
+    <div class="loader" id="loader">⏳ Sending...</div>
 </div>
 
 
-<!-- SUCCESS POPUP -->
 <div class="popup" id="popup">
     <div class="popup-box">
         <h3>✅ Emails Sent</h3>
-        <p id="result"></p>
-        <button class="close-btn" onclick="closePopup()">OK</button>
+        <p id="summary"></p>
+        <button onclick="closePopup()">OK</button>
     </div>
 </div>
 
 
 <script>
 function sendMail() {
-
-    let subject = document.getElementById("subject").value.trim();
-    let message = document.getElementById("message").value.trim();
-    let emails  = document.getElementById("emails").value.trim();
-
-    if (!subject || !message || !emails) {
-        alert("Please fill all fields!");
-        return;
-    }
+    let data = {
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value,
+        subject: document.getElementById("subject").value,
+        message: document.getElementById("message").value,
+        emails: document.getElementById("emails").value
+    };
 
     document.getElementById("loader").style.display = "block";
 
     fetch("/send-mails", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            subject: subject,
-            message: message,
-            emails: emails
-        })
+        body: JSON.stringify(data)
     })
     .then(res => res.json())
-    .then(data => {
-
+    .then(out => {
         document.getElementById("loader").style.display = "none";
-
-        document.getElementById("result").innerHTML =
-            `Total: ${data.total}<br>Success: ${data.success}<br>Failed: ${data.failed}`;
-
+        document.getElementById("summary").innerHTML =
+            `Total: ${out.total}<br>Success: ${out.success}<br>Failed: ${out.failed}`;
         document.getElementById("popup").style.display = "flex";
     });
 }
