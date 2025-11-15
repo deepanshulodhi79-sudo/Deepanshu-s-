@@ -1,114 +1,83 @@
-from flask import Flask, render_template, request, redirect, session, jsonify
+from flask import Flask, render_template, request, jsonify
 import smtplib
+import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.utils import formatdate, make_msgid
-import time
 
 app = Flask(__name__)
-app.secret_key = "SUPERSECRET123"
 
-ADMIN_USER = "admin"
-ADMIN_PASS = "12345"
+# ===============================
+# 🔥 Gmail SMTP CONFIG
+# ===============================
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+YOUR_EMAIL = "yourgmail@gmail.com"
+YOUR_PASSWORD = "your_app_password"   # Gmail App Password
 
-# ---------------------------------------------------------
-# ROUTES
-# ---------------------------------------------------------
-
+# ===============================
+# 🔥 Home Page
+# ===============================
 @app.route('/')
-def home():
-    if 'logged_in' in session:
-        return redirect('/dashboard')
-    return redirect('/login')
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == "POST":
-        u = request.form['username']
-        p = request.form['password']
-        if u == ADMIN_USER and p == ADMIN_PASS:
-            session['logged_in'] = True
-            return redirect('/dashboard')
-        return render_template("login.html", message="Invalid credentials")
-    return render_template("login.html")
-
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect('/login')
-
-
-@app.route('/dashboard')
-def dashboard():
-    if 'logged_in' not in session:
-        return redirect('/login')
+def index():
     return render_template("dashboard.html")
 
+# ===============================
+# 🔥 SEND MAIL API
+# ===============================
+@app.route('/send-mails', methods=['POST'])
+def send_mails():
+    data = request.json
+    
+    subject = data.get("subject")
+    message = data.get("message")
+    email_list_raw = data.get("emails")
 
-# ---------------------------------------------------------
-# EMAIL SENDING ENGINE (Manual Subject + Manual Message)
-# ---------------------------------------------------------
+    # Convert line-by-line emails into list
+    email_list = [email.strip() for email in email_list_raw.split("\n") if email.strip()]
 
-@app.route('/send', methods=['POST'])
-def send_email():
+    sent_count = 0
+    failed = []
 
-    sender_name   = request.form['sender_name']
-    sender_email  = request.form['sender_email']
-    sender_pass   = request.form['sender_pass']
-    subject       = request.form['subject']       # manual subject
-    body_template = request.form['message_body']  # manual message
-    recipients    = request.form['recipients']
+    # Gmail SMTP Session
+    try:
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(YOUR_EMAIL, YOUR_PASSWORD)
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)})
 
-    # line-by-line + comma support
-    raw = recipients.replace("\r", "").replace("\n", ",")
-    emails = [i.strip() for i in raw.split(",") if i.strip()]
-
-    success = 0
-    failed = 0
-    send_times = []
-
-    for r in emails:
-
-        start_time = time.time()
-
+    # ===============================
+    # 🔥 Send Mails Loop
+    # ===============================
+    for email in email_list:
         try:
             msg = MIMEMultipart()
-            msg['From'] = f"{sender_name} <{sender_email}>"
-            msg['To'] = r
-            msg['Subject'] = subject
-            msg['Date'] = formatdate(localtime=True)
-            msg['Message-ID'] = make_msgid()
+            msg["From"] = YOUR_EMAIL
+            msg["To"] = email
+            msg["Subject"] = subject
 
-            # message as user typed
-            msg.attach(MIMEText(body_template, "plain", "utf-8"))
+            msg.attach(MIMEText(message, "html"))
 
-            with smtplib.SMTP('smtp.gmail.com', 587) as s:
-                s.starttls()
-                s.login(sender_email, sender_pass)
-                s.send_message(msg)
+            server.sendmail(YOUR_EMAIL, email, msg.as_string())
+            sent_count += 1
 
-            success += 1
-
-            # SUPER FAST (0.1 sec)
-            time.sleep(0.1)
+            time.sleep(0.1)  # SUPER FAST SENDING
 
         except Exception as e:
-            print("Error:", e)
-            failed += 1
+            failed.append(email)
 
-        finally:
-            end_time = time.time()
-            send_times.append(round(end_time - start_time, 2))
+    server.quit()
 
+    # Return result
     return jsonify({
-        "total": len(emails),
-        "success": success,
-        "failed": failed,
-        "times": send_times
+        "status": "success",
+        "sent": sent_count,
+        "failed": failed
     })
 
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+# ===============================
+# Run App
+# ===============================
+if __name__ == '__main__':
+    app.run(debug=True, host="0.0.0.0", port=5000)
