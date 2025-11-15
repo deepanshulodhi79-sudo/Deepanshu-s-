@@ -4,15 +4,29 @@
     <title>Dashboard</title>
     <style>
         body {
-            background: #0d0d0d;
+            background: #101010;
             color: #fff;
-            font-family: Arial;
-            padding: 30px;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+        }
+        .logout-btn {
+            background: #ff4444;
+            padding: 10px 18px;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
         }
         .container {
             width: 600px;
             margin: auto;
-            background: #1b1b1b;
+            background: #1d1d1d;
             padding: 25px;
             border-radius: 12px;
         }
@@ -20,7 +34,7 @@
             width: 100%;
             padding: 12px;
             margin-top: 12px;
-            background: #222;
+            background: #2b2b2b;
             border: none;
             color: #fff;
             border-radius: 8px;
@@ -28,65 +42,81 @@
         }
         button {
             width: 100%;
-            padding: 14px;
+            padding: 15px;
             margin-top: 18px;
-            background: #00d9ff;
+            background: #00eaff;
             border: none;
             font-size: 17px;
             font-weight: bold;
             border-radius: 8px;
+            cursor: pointer;
+            color: #000;
         }
         .loader {
             display:none;
             margin-top:15px;
             text-align:center;
+            font-size: 18px;
         }
         .popup {
             display:none;
             position:fixed;
-            top:0; left:0;
-            height:100%; width:100%;
-            background:rgba(0,0,0,0.7);
+            top:0;
+            left:0;
+            height:100%;
+            width:100%;
+            background:rgba(0,0,0,0.75);
             justify-content:center;
             align-items:center;
         }
         .popup-box {
-            background:#1f1f1f;
+            background:#222;
             padding:25px;
             border-radius:10px;
-            width:300px;
+            width:320px;
             text-align:center;
             border:2px solid #00eaff;
+        }
+        .close-btn {
+            margin-top: 15px;
+            background:#00eaff;
+            padding:8px 14px;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
         }
     </style>
 </head>
 <body>
 
+<div class="topbar">
+    <h2>Email Sender</h2>
+    <a class="logout-btn" href="/logout">Logout</a>
+</div>
+
 <div class="container">
 
-    <h2>📨 Send Emails</h2>
-
     <label>Subject</label>
-    <input id="subject" placeholder="Enter subject">
+    <input id="subject" placeholder="Enter mail subject">
 
     <label>Message</label>
-    <textarea id="message" rows="6" placeholder="Write your message..."></textarea>
+    <textarea id="message" rows="6" placeholder="Enter your message here..."></textarea>
 
-    <label>Emails (one per line)</label>
+    <label>Emails (one email per line)</label>
     <textarea id="emails" rows="6" placeholder="example@gmail.com"></textarea>
 
-    <button onclick="sendMail()">SEND MAILS</button>
+    <button onclick="sendMail()">Send Emails</button>
 
-    <div class="loader" id="loader">⏳ Sending...</div>
+    <div class="loader" id="loader">⏳ Sending emails...</div>
 </div>
 
 
 <!-- SUCCESS POPUP -->
 <div class="popup" id="popup">
     <div class="popup-box">
-        <h3>✅ Mail Sent Successfully</h3>
+        <h3>✅ Emails Sent</h3>
         <p id="result"></p>
-        <button onclick="closePopup()">OK</button>
+        <button class="close-btn" onclick="closePopup()">OK</button>
     </div>
 </div>
 
@@ -99,7 +129,7 @@ function sendMail() {
     let emails  = document.getElementById("emails").value.trim();
 
     if (!subject || !message || !emails) {
-        alert("Please fill all fields");
+        alert("Please fill all fields!");
         return;
     }
 
@@ -107,7 +137,7 @@ function sendMail() {
 
     fetch("/send-mails", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
             subject: subject,
             message: message,
