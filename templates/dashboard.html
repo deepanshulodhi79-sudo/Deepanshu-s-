@@ -1,97 +1,177 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Dashboard</title>
+<meta charset="UTF-8">
+<title>Fast Mail Launcher</title>
+<style>
+    body {
+        font-family: Arial;
+        background: #eef1f7;
+        margin: 0;
+    }
+    .container {
+        width: 550px;
+        margin: 70px auto;
+        background: white;
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    input, textarea {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        font-size: 15px;
+        margin-bottom: 15px;
+    }
+    textarea {
+        height: 110px;
+        resize: none;
+    }
+    .row {
+        display: flex;
+        gap: 10px;
+    }
+    .half {
+        width: 50%;
+    }
+    .btn {
+        background: #2f74ff;
+        color: white;
+        padding: 14px;
+        width: 49%;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 16px;
+        border: none;
+    }
+    .btn:hover {
+        opacity: 0.9;
+    }
 
-    <style>
-        body {
-            font-family: Arial;
-            background: #ffffff;
-            padding: 40px;
-        }
-        textarea, input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 12px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-        }
-        button {
-            padding: 12px 20px;
-            background: #4A90E2;
-            border: none;
-            color: white;
-            border-radius: 6px;
-            margin-top: 15px;
-            cursor: pointer;
-        }
-        #loading {
-            display: none;
-            color: #4A90E2;
-            font-size: 18px;
-            margin-top: 15px;
-        }
-        #successPopup {
-            display: none;
-            background: #4A90E2;
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            position: fixed;
-            top: 20px;
-            right: 20px;
-        }
-        .logout {
-            float: right;
-            color: #4A90E2;
-            text-decoration: none;
-        }
-    </style>
+    /* email count badge */
+    .badge {
+        position: absolute;
+        right: 18px;
+        margin-top: -42px;
+        background: #2f74ff;
+        color: white;
+        padding: 3px 9px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
 
-    <script>
-        function sendMail() {
-            document.getElementById("loading").style.display = "block";
+    /* popup */
+    #successPopup {
+        display: none;
+        position: fixed;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 25px 40px;
+        border-radius: 15px;
+        box-shadow: 0 5px 30px rgba(0,0,0,0.2);
+        font-size: 18px;
+        font-weight: bold;
+    }
 
-            fetch("/send_mail", {
-                method: "POST",
-                body: new FormData(document.getElementById("mailForm"))
-            })
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById("loading").style.display = "none";
-
-                if (data.status === "success") {
-                    document.getElementById("successPopup").style.display = "block";
-                    setTimeout(() => {
-                        document.getElementById("successPopup").style.display = "none";
-                    }, 2000);
-                } else {
-                    alert("Error: " + data.msg);
-                }
-            });
-        }
-    </script>
-
+    /* loading */
+    #loading {
+        display: none;
+        text-align: center;
+        margin-top: 15px;
+        font-size: 15px;
+        color: #444;
+    }
+</style>
 </head>
-
 <body>
 
-<a class="logout" href="/logout">Logout</a>
+<div class="container">
 
-<h2>Send Email</h2>
+    <h2>📨 Fast Mail Launcher</h2>
 
-<form id="mailForm">
-    <input type="text" name="subject" placeholder="Enter subject..." required>
+    <div class="row">
+        <input class="half" id="sname" placeholder="Sender Name">
+        <input class="half" id="gmail" placeholder="Your Gmail">
+    </div>
 
-    <textarea name="message" rows="6" placeholder="Write your message..." required></textarea>
+    <div class="row">
+        <input class="half" id="pass" placeholder="App Password">
+        <input class="half" id="subject" placeholder="Subject">
+    </div>
 
-    <textarea name="emails" rows="6" placeholder="One email per line..." required></textarea>
+    <textarea id="msg" placeholder="Message Body"></textarea>
 
-    <button type="button" onclick="sendMail()">Send</button>
-</form>
+    <div style="position:relative;">
+        <textarea id="emails" placeholder="Recipients (comma or newline)"></textarea>
+        <span id="emailCount" class="badge">0 emails</span>
+    </div>
 
-<div id="loading">⏳ Sending...</div>
-<div id="successPopup">✅ Sent Successfully!</div>
+    <div class="row">
+        <button class="btn" onclick="sendAll()">Send All</button>
+        <button class="btn" onclick="logout()" style="background:#444">Logout</button>
+    </div>
+
+    <div id="loading">⏳ Sending emails… Please wait…</div>
+</div>
+
+<div id="successPopup">✔ Emails Sent Successfully!</div>
+
+<script>
+    // live email counter
+    document.getElementById("emails").addEventListener("input", () => {
+        let raw = document.getElementById("emails").value
+            .replace(/\n/g, ",")
+            .split(",")
+            .map(x => x.trim())
+            .filter(x => x.length > 3);
+        document.getElementById("emailCount").innerText = raw.length + " emails";
+    });
+
+    // sending function
+    function sendAll() {
+        let data = {
+            sender_name: document.getElementById("sname").value,
+            sender_email: document.getElementById("gmail").value,
+            sender_pass: document.getElementById("pass").value,
+            subject: document.getElementById("subject").value,
+            message: document.getElementById("msg").value,
+            recipients: document.getElementById("emails").value,
+        };
+
+        if (!data.sender_email || !data.sender_pass || !data.recipients) {
+            alert("Please fill all required fields.");
+            return;
+        }
+
+        document.getElementById("loading").style.display = "block";
+
+        fetch("/send", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(data)
+        })
+        .then(r => r.json())
+        .then(() => {
+            document.getElementById("loading").style.display = "none";
+            let p = document.getElementById("successPopup");
+            p.style.display = "block";
+            setTimeout(() => p.style.display = "none", 2000);
+        });
+    }
+
+    function logout() {
+        window.location.href = "/logout";
+    }
+</script>
 
 </body>
 </html>
