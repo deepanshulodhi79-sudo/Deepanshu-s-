@@ -1,49 +1,55 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
 <title>Login</title>
 <style>
-    body {
-        background: #eef1f7;
-        font-family: Arial;
-    }
-    .box {
-        width: 350px;
-        margin: 120px auto;
-        background: white;
-        padding: 30px;
-        border-radius: 18px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        text-align: center;
-    }
-    input {
-        width: 100%;
-        padding: 12px;
-        margin-top: 12px;
-        border-radius: 10px;
-        border: 1px solid #ccc;
-    }
-    button {
-        width: 100%;
-        padding: 12px;
-        margin-top: 15px;
-        background: #2f74ff;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 16px;
-    }
+body {
+    background: #f2f4f8;
+    font-family: Arial;
+}
+.box {
+    width: 350px;
+    margin: 130px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 15px;
+}
+button {
+    width: 100%;
+    padding: 12px;
+    background: #2f74ff;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+button:hover {
+    opacity: .9;
+}
+.msg {
+    color: red;
+    text-align: center;
+    margin-bottom: 10px;
+}
 </style>
 </head>
 <body>
 
 <div class="box">
-    <h2>Login</h2>
+    <h2 style="text-align:center;">Login</h2>
 
     {% if message %}
-    <p style="color:red;">{{ message }}</p>
+    <div class="msg">{{ message }}</div>
     {% endif %}
 
     <form method="POST">
