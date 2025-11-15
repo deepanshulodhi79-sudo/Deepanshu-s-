@@ -1,83 +1,111 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, redirect, session, jsonify
 import smtplib
-import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.utils import formatdate
+import time
 
 app = Flask(__name__)
+app.secret_key = "SUPERSECRET123"
 
-# ===============================
-# 🔥 Gmail SMTP CONFIG
-# ===============================
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
-YOUR_EMAIL = "yourgmail@gmail.com"
-YOUR_PASSWORD = "your_app_password"   # Gmail App Password
+ADMIN_USER = "admin"
+ADMIN_PASS = "12345"
 
-# ===============================
-# 🔥 Home Page
-# ===============================
+
+# --------------------------
+# HOME → LOGIN REDIRECT
+# --------------------------
 @app.route('/')
-def index():
+def home():
+    if 'logged_in' in session:
+        return redirect('/dashboard')
+    return redirect('/login')
+
+
+# --------------------------
+# LOGIN PAGE
+# --------------------------
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        u = request.form['username']
+        p = request.form['password']
+
+        if u == ADMIN_USER and p == ADMIN_PASS:
+            session['logged_in'] = True
+            return redirect('/dashboard')
+
+        return render_template("login.html", message="Invalid Credentials")
+
+    return render_template("login.html")
+
+
+# --------------------------
+# LOGOUT
+# --------------------------
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/login')
+
+
+# --------------------------
+# DASHBOARD PAGE
+# --------------------------
+@app.route('/dashboard')
+def dashboard():
+    if 'logged_in' not in session:
+        return redirect('/login')
     return render_template("dashboard.html")
 
-# ===============================
-# 🔥 SEND MAIL API
-# ===============================
+
+# --------------------------
+# SEND MAILS (NEW WORKING API)
+# --------------------------
 @app.route('/send-mails', methods=['POST'])
 def send_mails():
-    data = request.json
-    
-    subject = data.get("subject")
-    message = data.get("message")
-    email_list_raw = data.get("emails")
 
-    # Convert line-by-line emails into list
-    email_list = [email.strip() for email in email_list_raw.split("\n") if email.strip()]
+    data = request.get_json()
 
-    sent_count = 0
-    failed = []
+    subject = data["subject"]
+    message = data["message"]
+    emails_raw = data["emails"]
 
-    # Gmail SMTP Session
-    try:
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-        server.starttls()
-        server.login(YOUR_EMAIL, YOUR_PASSWORD)
-    except Exception as e:
-        return jsonify({"status": "error", "error": str(e)})
+    # break line by line
+    recipients = [i.strip() for i in emails_raw.split("\n") if i.strip()]
 
-    # ===============================
-    # 🔥 Send Mails Loop
-    # ===============================
-    for email in email_list:
+    success = 0
+    fail = 0
+
+    for r in recipients:
         try:
             msg = MIMEMultipart()
-            msg["From"] = YOUR_EMAIL
-            msg["To"] = email
-            msg["Subject"] = subject
+            msg['From'] = "Your Name <your@gmail.com>"
+            msg['To'] = r
+            msg['Subject'] = subject
+            msg['Date'] = formatdate(localtime=True)
 
-            msg.attach(MIMEText(message, "html"))
+            msg.attach(MIMEText(message, "plain"))
 
-            server.sendmail(YOUR_EMAIL, email, msg.as_string())
-            sent_count += 1
+            with smtplib.SMTP("smtp.gmail.com", 587) as s:
+                s.starttls()
+                s.login("your@gmail.com", "your_app_password")
+                s.send_message(msg)
 
-            time.sleep(0.1)  # SUPER FAST SENDING
+            success += 1
+            time.sleep(0.1)   # ultra fast
 
         except Exception as e:
-            failed.append(email)
+            print("Error:", e)
+            fail += 1
 
-    server.quit()
-
-    # Return result
     return jsonify({
         "status": "success",
-        "sent": sent_count,
-        "failed": failed
+        "total": len(recipients),
+        "success": success,
+        "failed": fail
     })
 
 
-# ===============================
-# Run App
-# ===============================
-if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=5000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
