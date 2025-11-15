@@ -1,136 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mail Sender — Simple Dashboard</title>
-
+    <meta charset="UTF-8">
+    <title>Mail Sender Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: #f4f4f4;
+            background: #f2f2f2;
             margin: 0;
             padding: 0;
         }
+
         .container {
-            max-width: 700px;
+            width: 55%;
             margin: 40px auto;
             background: white;
             padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0px 0px 25px rgba(0,0,0,0.15);
         }
+
         h2 {
             text-align: center;
             margin-bottom: 25px;
+            color: #222;
         }
-        label {
-            font-weight: bold;
-            margin-top: 10px;
-            display: block;
-        }
+
         input, textarea {
             width: 100%;
-            padding: 10px;
-            margin-top: 6px;
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 8px;
             border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 15px;
+            font-size: 16px;
         }
+
         textarea {
-            height: 110px;
+            height: 180px;
+            resize: vertical;
+            font-size: 17px;
         }
+
+        #charCount {
+            text-align: right;
+            margin-top: -8px;
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
         button {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 17px;
             background: #007bff;
             color: white;
-            border: none;
-            margin-top: 15px;
-            font-size: 17px;
-            border-radius: 6px;
             cursor: pointer;
+            margin-top: 10px;
         }
-        button:disabled {
-            background: #888;
+
+        button:hover {
+            background: #005fcc;
         }
-        #statusBox {
-            margin-top: 20px;
-            padding: 12px;
-            background: #e8f7e2;
-            border-left: 4px solid #4CAF50;
+
+        .top-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .top-buttons button {
+            width: 48%;
+            background: #444;
+        }
+
+        .top-buttons button:hover {
+            background: #222;
+        }
+
+        /* PREVIEW POPUP */
+        #previewPopup {
             display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
         }
-        .logout {
-            text-align: right;
-            margin-top: -20px;
+
+        #previewBox {
+            background: white;
+            width: 40%;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 0px 20px rgba(0,0,0,0.25);
         }
-        .logout a {
-            color: red;
-            text-decoration: none;
-            font-weight: bold;
+
+        #previewBox h3 {
+            margin-top: 0;
+        }
+
+        #closePreview {
+            background: red;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <h2>📨 Mail Sender Dashboard</h2>
 
-    <div class="logout">
-        <a href="/logout">Logout</a>
+    <div class="top-buttons">
+        <button onclick="logout()">Logout</button>
+        <button onclick="showPreview()">Preview Email</button>
     </div>
 
-    <h2>Simple Bulk Mail Sender</h2>
+    <form id="mailForm">
 
-    <label>Sender Name</label>
-    <input id="sender_name" placeholder="John Doe" />
+        <input type="text" name="sender_name" placeholder="Sender Name" required>
+        <input type="email" name="sender_email" placeholder="Your Gmail" required>
+        <input type="password" name="sender_pass" placeholder="App Password" required>
 
-    <label>Your Gmail</label>
-    <input id="sender_email" placeholder="example@gmail.com" />
+        <input type="text" id="subject" name="subject" placeholder="Email Subject..." required>
 
-    <label>App Password</label>
-    <input id="sender_pass" type="password" placeholder="16-digit app password" />
+        <textarea id="message_body" name="message_body" placeholder="Write your message..." required></textarea>
 
-    <label>Recipients (line-by-line)</label>
-    <textarea id="recipients" placeholder="email1@example.com
-email2@example.com"></textarea>
+        <div id="charCount">0 characters</div>
 
-    <button id="sendBtn" onclick="sendMail()">Send Emails</button>
+        <textarea name="recipients" placeholder="Enter recipients (line by line)" required></textarea>
 
-    <div id="statusBox"></div>
+        <button type="submit">Send Emails</button>
+    </form>
 
+    <h3 id="status"></h3>
 </div>
 
+
+<!-- PREVIEW POPUP -->
+<div id="previewPopup">
+    <div id="previewBox">
+        <h3>Email Preview</h3>
+        <p><strong>Subject:</strong> <span id="prevSub"></span></p>
+        <p><strong>Message:</strong></p>
+        <div id="prevMsg" style="white-space: pre-line; background:#f8f8f8; padding:10px; border-radius:6px;"></div>
+        
+        <button id="closePreview" onclick="closePreview()">Close</button>
+    </div>
+</div>
+
+
 <script>
-function sendMail() {
-    let btn = document.getElementById("sendBtn");
-    btn.disabled = true;
-    btn.innerText = "Sending...";
+document.getElementById("message_body").addEventListener("input", function () {
+    document.getElementById("charCount").innerText = this.value.length + " characters";
+});
 
-    fetch("/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body:
-            "sender_name=" + encodeURIComponent(sender_name.value) +
-            "&sender_email=" + encodeURIComponent(sender_email.value) +
-            "&sender_pass=" + encodeURIComponent(sender_pass.value) +
-            "&recipients=" + encodeURIComponent(recipients.value)
-    })
-    .then(res => res.json())
-    .then(data => {
-        let box = document.getElementById("statusBox");
-        box.style.display = "block";
-        box.innerHTML = `<b>Total:</b> ${data.total} | <b>Sent:</b> ${data.success} | <b>Failed:</b> ${data.failed}`;
+function showPreview() {
+    document.getElementById("prevSub").innerText =
+        document.getElementById("subject").value;
 
-        btn.disabled = false;
-        btn.innerText = "Send Emails";
-    })
-    .catch(err => {
-        alert("Error sending emails");
-        btn.disabled = false;
-        btn.innerText = "Send Emails";
-    });
+    document.getElementById("prevMsg").innerText =
+        document.getElementById("message_body").value;
+
+    document.getElementById("previewPopup").style.display = "flex";
 }
+
+function closePreview() {
+    document.getElementById("previewPopup").style.display = "none";
+}
+
+function logout() {
+    window.location.href = "/logout";
+}
+
+document.getElementById("mailForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    let formData = new FormData(this);
+
+    let res = await fetch("/send", {
+        method: "POST",
+        body: formData
+    });
+
+    let data = await res.json();
+
+    document.getElementById("status").innerHTML =
+        `✔ Sent: ${data.success} | ❌ Failed: ${data.failed}`;
+});
 </script>
 
 </body>
