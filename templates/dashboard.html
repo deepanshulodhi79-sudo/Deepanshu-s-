@@ -1,152 +1,109 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Email Sender Dashboard</title>
-
+    <title>Dashboard</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #111;
+            background: #0d0d0d;
             color: #fff;
-            margin: 0;
-            padding: 0;
+            font-family: Arial;
+            padding: 30px;
         }
-
         .container {
-            width: 60%;
-            margin: 40px auto;
-            background: #1c1c1c;
+            width: 600px;
+            margin: auto;
+            background: #1b1b1b;
             padding: 25px;
             border-radius: 12px;
-            box-shadow: 0 0 20px #000;
         }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #36e2ff;
-        }
-
-        label {
-            font-size: 17px;
-            margin-top: 15px;
-            display: block;
-        }
-
         input, textarea {
             width: 100%;
             padding: 12px;
-            margin-top: 6px;
-            border: none;
-            border-radius: 8px;
+            margin-top: 12px;
             background: #222;
+            border: none;
             color: #fff;
+            border-radius: 8px;
             font-size: 15px;
         }
-
-        textarea {
-            height: 150px;
-        }
-
         button {
             width: 100%;
             padding: 14px;
-            margin-top: 20px;
-            font-size: 17px;
-            background: #00c3ff;
-            color: #000;
-            font-weight: bold;
+            margin-top: 18px;
+            background: #00d9ff;
             border: none;
-            border-radius: 10px;
-            cursor: pointer;
+            font-size: 17px;
+            font-weight: bold;
+            border-radius: 8px;
         }
-
-        button:hover {
-            background: #05e1ff;
+        .loader {
+            display:none;
+            margin-top:15px;
+            text-align:center;
         }
-
-        /* Loading Spinner */
-        .loading {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .spinner {
-            border: 5px solid #333;
-            border-top: 5px solid #00d9ff;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            margin: auto;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Success Popup */
         .popup {
-            display: none;
-            position: fixed;
-            top: 30%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 25px;
-            background: #0f0;
-            color: #000;
-            border-radius: 10px;
-            font-size: 20px;
-            text-align: center;
-            box-shadow: 0 0 20px #000;
+            display:none;
+            position:fixed;
+            top:0; left:0;
+            height:100%; width:100%;
+            background:rgba(0,0,0,0.7);
+            justify-content:center;
+            align-items:center;
+        }
+        .popup-box {
+            background:#1f1f1f;
+            padding:25px;
+            border-radius:10px;
+            width:300px;
+            text-align:center;
+            border:2px solid #00eaff;
         }
     </style>
-
 </head>
 <body>
 
 <div class="container">
-    <h2>📨 Fast Bulk Email Sender</h2>
+
+    <h2>📨 Send Emails</h2>
 
     <label>Subject</label>
-    <input type="text" id="subject" placeholder="Enter subject...">
+    <input id="subject" placeholder="Enter subject">
 
     <label>Message</label>
-    <textarea id="message" placeholder="Enter message..."></textarea>
+    <textarea id="message" rows="6" placeholder="Write your message..."></textarea>
 
-    <label>Email List (Line by Line)</label>
-    <textarea id="emails" placeholder="one@email.com
-two@gmail.com
-three@yahoo.com"></textarea>
+    <label>Emails (one per line)</label>
+    <textarea id="emails" rows="6" placeholder="example@gmail.com"></textarea>
 
-    <button onclick="sendEmails()">Send Emails</button>
+    <button onclick="sendMail()">SEND MAILS</button>
 
-    <div class="loading" id="loadingBox">
-        <div class="spinner"></div>
-        <p>Sending emails, please wait...</p>
+    <div class="loader" id="loader">⏳ Sending...</div>
+</div>
+
+
+<!-- SUCCESS POPUP -->
+<div class="popup" id="popup">
+    <div class="popup-box">
+        <h3>✅ Mail Sent Successfully</h3>
+        <p id="result"></p>
+        <button onclick="closePopup()">OK</button>
     </div>
 </div>
 
-<!-- Success Popup -->
-<div class="popup" id="popupBox">
-    ✔ Emails Sent Successfully!
-</div>
 
 <script>
-function sendEmails() {
+function sendMail() {
 
     let subject = document.getElementById("subject").value.trim();
     let message = document.getElementById("message").value.trim();
-    let emails = document.getElementById("emails").value.trim();
+    let emails  = document.getElementById("emails").value.trim();
 
     if (!subject || !message || !emails) {
-        alert("Please fill all fields!");
+        alert("Please fill all fields");
         return;
     }
 
-    document.getElementById("loadingBox").style.display = "block";
+    document.getElementById("loader").style.display = "block";
 
     fetch("/send-mails", {
         method: "POST",
@@ -159,24 +116,18 @@ function sendEmails() {
     })
     .then(res => res.json())
     .then(data => {
-        document.getElementById("loadingBox").style.display = "none";
 
-        if (data.status === "success") {
-            showPopup("✔ Emails Sent Successfully!");
-        } else {
-            showPopup("❌ Error: " + data.error);
-        }
+        document.getElementById("loader").style.display = "none";
+
+        document.getElementById("result").innerHTML =
+            `Total: ${data.total}<br>Success: ${data.success}<br>Failed: ${data.failed}`;
+
+        document.getElementById("popup").style.display = "flex";
     });
 }
 
-function showPopup(msg) {
-    const popup = document.getElementById("popupBox");
-    popup.innerHTML = msg;
-    popup.style.display = "block";
-    
-    setTimeout(() => {
-        popup.style.display = "none";
-    }, 3000);
+function closePopup() {
+    document.getElementById("popup").style.display = "none";
 }
 </script>
 
