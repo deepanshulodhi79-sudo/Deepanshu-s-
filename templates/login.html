@@ -1,56 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: #f2f2f2;
-            display: flex;
-            height: 100vh;
-            justify-content: center;
-            align-items: center;
-        }
-        .box {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            width: 320px;
-            box-shadow: 0 0 10px #ccc;
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-        }
-        button {
-            width: 100%;
-            background: #4A90E2;
-            padding: 10px;
-            border: none;
-            margin-top: 15px;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        .error { color: red; margin-top: 10px; text-align: center; }
-    </style>
+<meta charset="UTF-8">
+<title>Login</title>
+<style>
+    body {
+        background: #eef1f7;
+        font-family: Arial;
+    }
+    .box {
+        width: 350px;
+        margin: 120px auto;
+        background: white;
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-top: 12px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+    }
+    button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 15px;
+        background: #2f74ff;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+</style>
 </head>
 <body>
 
 <div class="box">
     <h2>Login</h2>
-    <form action="/" method="POST">
-        <input type="text" name="username" placeholder="Username" required/>
-        <input type="password" name="password" placeholder="Password" required/>
-        <button type="submit">Login</button>
-    </form>
 
-    {% if error %}
-    <p class="error">{{ error }}</p>
+    {% if message %}
+    <p style="color:red;">{{ message }}</p>
     {% endif %}
+
+    <form method="POST">
+        <input name="username" placeholder="Username">
+        <input name="password" type="password" placeholder="Password">
+        <button>Login</button>
+    </form>
 </div>
 
 </body>
