@@ -5,63 +5,51 @@
     <title>Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Light Theme Styling -->
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f7f7f7;
-            margin: 0;
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #f0f0f0; 
+            margin: 0; 
             padding: 0;
         }
-
         .top-bar {
-            background: #ffffff;
+            background: #fff;
             padding: 15px 20px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
             border-bottom: 1px solid #ddd;
         }
-
         .logout-btn {
             background: #ff4d4d;
             color: white;
-            padding: 8px 15px;
+            padding: 8px 18px;
+            border-radius: 6px;
             text-decoration: none;
-            border-radius: 5px;
             font-weight: bold;
         }
-
         .container {
             width: 90%;
             max-width: 900px;
-            background: white;
-            padding: 25px;
+            background: #fff;
             margin: 25px auto;
+            padding: 25px;
             border-radius: 10px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
         }
-
-        label { font-weight: bold; }
-
         input, textarea {
             width: 100%;
             padding: 12px;
-            margin-top: 6px;
-            margin-bottom: 16px;
-            border-radius: 5px;
             border: 1px solid #ccc;
             background: #fafafa;
+            border-radius: 6px;
         }
-
         #emailsCount {
-            font-size: 12px;
+            font-size: 12px; 
+            text-align: right; 
+            margin-top: -12px; 
+            margin-bottom: 10px; 
             color: #444;
-            float: right;
-            margin-top: -10px;
-            margin-bottom: 10px;
         }
-
         .send-btn {
             width: 100%;
             padding: 12px;
@@ -72,116 +60,107 @@
             border-radius: 8px;
             cursor: pointer;
         }
-
-        /* Loading animation */
-        #loading {
-            display: none;
-            text-align: center;
-            font-size: 18px;
-            margin-top: 15px;
-            font-weight: bold;
+        #loading { 
+            display: none; 
+            text-align: center; 
+            margin-top: 15px; 
+            font-weight: bold; 
         }
-
-        /* Success popup */
         #successPopup {
             display: none;
             position: fixed;
-            top: 20px;
+            top: 20px; 
             right: 20px;
             background: #4CAF50;
             color: white;
             padding: 15px 25px;
             border-radius: 10px;
             font-size: 18px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
     </style>
 
-    <!-- Quill Editor CSS -->
+    <!-- Quill Rich Text CSS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-</head>
 
+</head>
 <body>
 
-    <!-- Top Bar -->
-    <div class="top-bar">
-        <h2>Email Sender Dashboard</h2>
-        <a href="/logout" class="logout-btn">Logout</a>
-    </div>
+<div class="top-bar">
+    <h2>Email Dashboard</h2>
+    <a href="/logout" class="logout-btn">Logout</a>
+</div>
 
-    <!-- Main Container -->
-    <div class="container">
+<div class="container">
+<form method="POST" action="/send-email">
 
-        <form method="POST" action="/send-email">
+    <label>Subject:</label>
+    <input type="text" name="subject" required placeholder="Enter subject...">
 
-            <!-- SUBJECT -->
-            <label>Subject:</label>
-            <input type="text" name="subject" placeholder="Enter subject..." required>
+    <label>Emails:</label>
+    <textarea name="emails" id="emails" rows="4" placeholder="Enter emails line by line..." required></textarea>
+    <div id="emailsCount">0 emails</div>
 
-            <!-- EMAILS INPUT -->
-            <label>Emails:</label>
-            <textarea id="emails" name="emails" rows="4" placeholder="Enter emails line by line..." required></textarea>
-            <div id="emailsCount">0 emails</div>
+    <label>Message:</label>
 
-            <!-- MESSAGE EDITOR -->
-            <label>Message:</label>
+    <!-- Rich Text Editor Box -->
+    <div id="editor" style="height: 260px; background: white;"></div>
 
-            <div id="editor" style="height: 250px; background:white;"></div>
+    <!-- Hidden HTML input -->
+    <input type="hidden" name="message" id="messageInput">
 
-            <input type="hidden" name="message" id="messageInput">
+    <button type="submit" class="send-btn">Send Emails</button>
 
-            <!-- SEND BUTTON -->
-            <button class="send-btn" type="submit">Send Emails</button>
+    <div id="loading">⏳ Sending emails...</div>
 
-            <!-- Loading Animation -->
-            <div id="loading">⏳ Sending emails, please wait...</div>
+</form>
+</div>
 
-        </form>
-    </div>
+<div id="successPopup">✔ Emails Sent Successfully!</div>
 
-    <!-- Success popup -->
-    <div id="successPopup">✔ Emails sent successfully!</div>
+<!-- Quill JS -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
-    <!-- Quill JS -->
-    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-
-    <script>
-        // Rich text editor
-        var quill = new Quill('#editor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    ['bold', 'italic', 'underline'],
-                    [{ 'color': [] }],
-                    [{ 'size': ['small', false, 'large', 'huge'] }],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    ['link'],
-                    ['clean']
-                ]
-            }
-        });
-
-        // Convert editor content to HTML before submitting
-        const form = document.querySelector("form");
-        form.addEventListener("submit", function () {
-            document.getElementById("messageInput").value = quill.root.innerHTML;
-            document.getElementById("loading").style.display = "block";
-        });
-
-        // Email count
-        document.getElementById("emails").addEventListener("input", function () {
-            let count = this.value.trim().split("\n").filter(e => e.trim() !== "").length;
-            document.getElementById("emailsCount").innerText = count + " emails";
-        });
-
-        // Show success popup after redirect
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("success") === "1") {
-            const popup = document.getElementById("successPopup");
-            popup.style.display = "block";
-            setTimeout(() => popup.style.display = "none", 3000);
+<script>
+    // Enable WordPad Style Editor
+    var quill = new Quill('#editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline'], 
+                [{ 'color': [] }],
+                [{ 'size': ['small', false, 'large', 'huge'] }],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['link'],
+                ['clean']
+            ]
         }
-    </script>
+    });
+
+    // Convert to HTML before submitting
+    document.querySelector("form").addEventListener("submit", () => {
+        document.getElementById("messageInput").value = quill.root.innerHTML;
+        document.getElementById("loading").style.display = "block";
+    });
+
+    // Email counter
+    document.getElementById("emails").addEventListener("input", function() {
+        let count = this.value
+            .trim()
+            .split("\n")
+            .filter(e => e.trim() !== "")
+            .length;
+
+        document.getElementById("emailsCount").innerText = count + " emails";
+    });
+
+    // Success Popup after redirect
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") === "1") {
+        let pop = document.getElementById("successPopup");
+        pop.style.display = "block";
+        setTimeout(() => pop.style.display = "none", 3000);
+    }
+</script>
 
 </body>
 </html>
