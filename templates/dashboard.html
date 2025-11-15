@@ -8,7 +8,7 @@
     <style>
         body { 
             font-family: Arial, sans-serif; 
-            background: #f0f0f0; 
+            background: #eef1f7; 
             margin: 0; 
             padding: 0;
         }
@@ -20,7 +20,7 @@
             border-bottom: 1px solid #ddd;
         }
         .logout-btn {
-            background: #ff4d4d;
+            background: #444;
             color: white;
             padding: 8px 18px;
             border-radius: 6px;
@@ -30,30 +30,31 @@
         .container {
             width: 90%;
             max-width: 900px;
-            background: #fff;
+            background: white;
             margin: 25px auto;
             padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         input, textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #ccc;
             background: #fafafa;
-            border-radius: 6px;
+            border-radius: 7px;
+            margin-bottom: 15px;
         }
         #emailsCount {
-            font-size: 12px; 
-            text-align: right; 
-            margin-top: -12px; 
-            margin-bottom: 10px; 
-            color: #444;
+            font-size: 12px;
+            text-align: right;
+            margin-top: -12px;
+            margin-bottom: 10px;
+            color: #555;
         }
         .send-btn {
             width: 100%;
             padding: 12px;
-            background: #4caf50;
+            background: #2f74ff;
             color: white;
             font-size: 18px;
             border: none;
@@ -76,10 +77,13 @@
             padding: 15px 25px;
             border-radius: 10px;
             font-size: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
+        .row { display: flex; gap: 10px; }
+        .half { width: 50%; }
     </style>
 
-    <!-- Quill Rich Text CSS -->
+    <!-- Quill Rich Editor CSS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
 </head>
@@ -93,19 +97,23 @@
 <div class="container">
 <form method="POST" action="/send-email">
 
-    <label>Subject:</label>
-    <input type="text" name="subject" required placeholder="Enter subject...">
+    <div class="row">
+        <input class="half" type="text" name="sender_name" placeholder="Sender Name" required>
+        <input class="half" type="email" name="sender_email" placeholder="Your Gmail" required>
+    </div>
 
-    <label>Emails:</label>
+    <div class="row">
+        <input class="half" type="password" name="sender_pass" placeholder="App Password" required>
+        <input class="half" type="text" name="subject" placeholder="Email Subject" required>
+    </div>
+
+    <label><b>Recipient Emails:</b></label>
     <textarea name="emails" id="emails" rows="4" placeholder="Enter emails line by line..." required></textarea>
     <div id="emailsCount">0 emails</div>
 
-    <label>Message:</label>
+    <label><b>Message (HTML Editor):</b></label>
+    <div id="editor" style="height: 260px; background: white; border-radius: 7px;"></div>
 
-    <!-- Rich Text Editor Box -->
-    <div id="editor" style="height: 260px; background: white;"></div>
-
-    <!-- Hidden HTML input -->
     <input type="hidden" name="message" id="messageInput">
 
     <button type="submit" class="send-btn">Send Emails</button>
@@ -126,7 +134,7 @@
         theme: 'snow',
         modules: {
             toolbar: [
-                ['bold', 'italic', 'underline'], 
+                ['bold', 'italic', 'underline'],
                 [{ 'color': [] }],
                 [{ 'size': ['small', false, 'large', 'huge'] }],
                 [{ 'list': 'ordered'}, { 'list': 'bullet' }],
@@ -136,7 +144,7 @@
         }
     });
 
-    // Convert to HTML before submitting
+    // Convert to HTML before sending
     document.querySelector("form").addEventListener("submit", () => {
         document.getElementById("messageInput").value = quill.root.innerHTML;
         document.getElementById("loading").style.display = "block";
@@ -144,16 +152,11 @@
 
     // Email counter
     document.getElementById("emails").addEventListener("input", function() {
-        let count = this.value
-            .trim()
-            .split("\n")
-            .filter(e => e.trim() !== "")
-            .length;
-
+        let count = this.value.trim().split("\n").filter(e => e.trim() !== "").length;
         document.getElementById("emailsCount").innerText = count + " emails";
     });
 
-    // Success Popup after redirect
+    // Success popup
     const params = new URLSearchParams(window.location.search);
     if (params.get("success") === "1") {
         let pop = document.getElementById("successPopup");
