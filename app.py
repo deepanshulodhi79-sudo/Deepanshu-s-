@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, session, jsonify
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.utils import formatdate
+from email.utils import formatdate, make_msgid
 import time
 
 app = Flask(__name__)
@@ -12,9 +12,6 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "12345"
 
 
-# --------------------------
-# HOME → LOGIN REDIRECT
-# --------------------------
 @app.route('/')
 def home():
     if 'logged_in' in session:
@@ -22,36 +19,22 @@ def home():
     return redirect('/login')
 
 
-# --------------------------
-# LOGIN PAGE
-# --------------------------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        u = request.form['username']
-        p = request.form['password']
-
-        if u == ADMIN_USER and p == ADMIN_PASS:
+    if request.method == "POST":
+        if request.form['username'] == ADMIN_USER and request.form['password'] == ADMIN_PASS:
             session['logged_in'] = True
             return redirect('/dashboard')
-
-        return render_template("login.html", message="Invalid Credentials")
-
+        return render_template("login.html", message="Invalid credentials")
     return render_template("login.html")
 
 
-# --------------------------
-# LOGOUT
-# --------------------------
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/login')
 
 
-# --------------------------
-# DASHBOARD PAGE
-# --------------------------
 @app.route('/dashboard')
 def dashboard():
     if 'logged_in' not in session:
@@ -59,51 +42,52 @@ def dashboard():
     return render_template("dashboard.html")
 
 
-# --------------------------
-# SEND MAILS (NEW WORKING API)
-# --------------------------
+# ------------------------------
+# MAIL SENDER (CUSTOM SUBJECT + MESSAGE)
+# ------------------------------
+
 @app.route('/send-mails', methods=['POST'])
 def send_mails():
-
     data = request.get_json()
 
-    subject = data["subject"]
-    message = data["message"]
-    emails_raw = data["emails"]
+    sender_name  = "Sender"
+    sender_email = data.get("email")
+    sender_pass  = data.get("password")
 
-    # break line by line
-    recipients = [i.strip() for i in emails_raw.split("\n") if i.strip()]
+    subject = data.get("subject")
+    message = data.get("message")
+
+    raw = data.get("emails", "")
+    recipients = [i.strip() for i in raw.split("\n") if i.strip()]
 
     success = 0
-    fail = 0
+    failed = 0
 
     for r in recipients:
         try:
             msg = MIMEMultipart()
-            msg['From'] = "Your Name <your@gmail.com>"
+            msg['From'] = f"{sender_name} <{sender_email}>"
             msg['To'] = r
             msg['Subject'] = subject
+            msg['Message-ID'] = make_msgid()
             msg['Date'] = formatdate(localtime=True)
+            msg.attach(MIMEText(message, "plain", "utf-8"))
 
-            msg.attach(MIMEText(message, "plain"))
-
-            with smtplib.SMTP("smtp.gmail.com", 587) as s:
+            with smtplib.SMTP('smtp.gmail.com', 587) as s:
                 s.starttls()
-                s.login("your@gmail.com", "your_app_password")
+                s.login(sender_email, sender_pass)
                 s.send_message(msg)
 
             success += 1
-            time.sleep(0.1)   # ultra fast
+            time.sleep(0.2)
 
-        except Exception as e:
-            print("Error:", e)
-            fail += 1
+        except:
+            failed += 1
 
     return jsonify({
-        "status": "success",
         "total": len(recipients),
         "success": success,
-        "failed": fail
+        "failed": failed
     })
 
 
