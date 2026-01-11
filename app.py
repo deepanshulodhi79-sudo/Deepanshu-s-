@@ -1,105 +1,77 @@
-from flask import Flask, render_template, request, redirect, session, jsonify
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.utils import formatdate, make_msgid
-import time
+import os
+from flask import Flask, render_template, request, flash, redirect, url_for, session
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Personalization, To
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables
 
 app = Flask(__name__)
-app.secret_key = "SUPERSECRET123"
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your_secret_key_here')  # Set a strong secret
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+VERIFIED_SENDER = os.getenv('VERIFIED_SENDER')  # Your verified SendGrid sender email
 
-# Login Details
-ADMIN_USER = "admin"
-ADMIN_PASS = "12345"
+# Simple user credentials (replace with your own; for production, use a database)
+USERS = {'admin': 'password123'}  # Username: password
 
-
-# -------------------------------
-# LOGIN PAGE
-# -------------------------------
-@app.route('/')
-def home():
-    return redirect('/login')
-
-
-@app.route('/login', methods=['GET','POST'])
+@app.route('/', methods=['GET', 'POST'])
 def login():
-    if request.method == "POST":
-        if request.form['username'] == ADMIN_USER and request.form['password'] == ADMIN_PASS:
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username in USERS and USERS[username] == password:
             session['logged_in'] = True
-            return redirect('/dashboard')
-        return render_template("login.html", message="Invalid Credentials")
-    return render_template("login.html")
+            return redirect(url_for('launcher'))
+        else:
+            flash('Invalid credentials. Try again.')
+    return render_template('login.html')
 
+@app.route('/launcher', methods=['GET', 'POST'])
+def launcher():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        sender_name = request.form['sender_name']
+        subject = request.form['subject']
+        body = request.form['body']  # Supports HTML for better emails
+        recipients_str = request.form['recipients']
+        recipients = [r.strip() for r in recipients_str.replace('\n', ',').split(',') if r.strip()]
+        
+        if len(recipients) > 27:  # Your limit; adjust as needed
+            flash('Limited to 27 recipients to avoid spam flags. Upgrade SendGrid plan for more.')
+            return redirect(url_for('launcher'))
+        
+        try:
+            sg = SendGridAPIClient(SENDGRID_API_KEY)
+            message = Mail(
+                from_email=VERIFIED_SENDER,
+                subject=subject,
+                html_content=body
+            )
+            for recipient in recipients:
+                personalization = Personalization()
+                personalization.add_to(To(recipient, name=sender_name))  # Personalize with name if needed
+                message.add_personalization(personalization)
+            
+            # Anti-spam headers
+            message.add_header('List-Unsubscribe', f'<mailto:unsubscribe@{VERIFIED_SENDER.split("@")[1]}>')
+            message.asm = {'group_id': 1}  # Use SendGrid suppression group for unsubscribes
+            
+            response = sg.send(message)
+            if response.status_code != 202:
+                raise Exception('Send failed.')
+            flash(f'{len(recipient)} emails sent successfully!')
+        except Exception as e:
+            flash(f'Error: {str(e)}')
+        return redirect(url_for('launcher'))
+    
+    return render_template('launcher.html')
 
 @app.route('/logout')
 def logout():
-    session.clear()
-    return redirect('/login')
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
 
-
-# -------------------------------
-# DASHBOARD
-# -------------------------------
-@app.route('/dashboard')
-def dashboard():
-    if 'logged_in' not in session:
-        return redirect('/login')
-    return render_template("dashboard.html")
-
-
-# -------------------------------
-# SEND EMAIL (HTML SUPPORT)
-# -------------------------------
-@app.route('/send', methods=['POST'])
-def send_email():
-
-    data = request.get_json()
-
-    sender_name  = data.get('sender_name')
-    sender_email = data.get('sender_email')
-    sender_pass  = data.get('sender_pass')
-    subject      = data.get('subject')
-    message_html = data.get('message_html')
-    recipients   = data.get('recipients')
-
-    raw = recipients.replace("\r", "").replace("\n", ",")
-    emails = [e.strip() for e in raw.split(",") if len(e.strip()) > 5]
-
-    success = 0
-    failed = 0
-
-    for r in emails:
-        try:
-            msg = MIMEMultipart("alternative")
-            msg['From'] = f"{sender_name} <{sender_email}>"
-            msg['To'] = r
-            msg['Subject'] = subject
-            msg['Message-ID'] = make_msgid()
-            msg['Date'] = formatdate(localtime=True)
-
-            msg.attach(MIMEText(message_html, "html", "utf-8"))
-
-            with smtplib.SMTP('smtp.gmail.com', 587) as s:
-                s.starttls()
-                s.login(sender_email, sender_pass)
-                s.send_message(msg)
-
-            success += 1
-            time.sleep(0.08)
-
-        except Exception as e:
-            print("ERROR:", e)
-            failed += 1
-
-    return jsonify({
-        "total": len(emails),
-        "success": success,
-        "failed": failed
-    })
-
-
-# -------------------------------
-# RUN SERVER
-# -------------------------------
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+if __name__ == '__main__':
+    app.run(debug=True)
